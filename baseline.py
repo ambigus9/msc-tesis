@@ -18,19 +18,34 @@ def normalizar(datos):
   scaler = StandardScaler()
   return scaler.fit_transform(datos)
 
-def training(X_train,y_train,X_test,y_test):
-  # Extraer Deep Features X_train
-  caracteristicas_train = []
-  for i in tqdm(X_train):
+def training(X_train,y_train):
+  #Extraer características
+  caracteristicas_train = deep_extractor(X_train)
+  X_train = normalizar( np.array(caracteristicas_train) )
+
+  # Entrenar SVM
+  clf = SVC(probability=True, kernel='linear', C=1.0)
+  clf.fit(X_train, y_train)
+  return clf
+
+def deep_extractor(imagenes):
+  caracteristicas = []
+  for i in tqdm(imagenes):
     img = image.load_img( i , target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
     fc1000 = model.predict(x)
-    caracteristicas_train.append(fc1000[0])
-  
-  X_train = normalizar( np.array(caracteristicas_train) )
-    
+    caracteristicas.append(fc1000[0])
+  return caracteristicas
+
+def labeling(clasificador,batch_set,EL,LC):
+  caracteristicas_batch_set = deep_extractor(batch_set)
+  y_pred = clasificador.predict(caracteristicas_batch_set)
+  y_pred_proba = clasificador.predict_proba(caracteristicas_batch_set)
+  return y_pred, y_pred_proba
+
+def test(X_test,y_test):
   # Extraer Deep Features X_test
   caracteristicas_test = []
   for i in tqdm(X_test):
@@ -42,14 +57,7 @@ def training(X_train,y_train,X_test,y_test):
     caracteristicas_test.append(fc1000[0])
   
   X_test = normalizar( np.array(caracteristicas_test) )
-    
-  # Entrenar SVM
-  clf = SVC(probability=True, kernel='linear', C=1.0)
-  clf.fit(X_train, y_train)
-  
-  y_pred = clf.predict(X_train)
-  print("Puntaje: ",clf.score(X_test,y_test))
-  return clf
+  return X_test, y_test
 
 def split_dataset(L,porcentaje,metodo):
   clases = list()
@@ -103,12 +111,18 @@ metodo = 'semi-supervisado'
 batch_size = 0.2
 porcentaje = 0.1
 
-#X_train, X_val, X_test, y_train, y_val, y_test, U_img = split_dataset(L,porcentaje,metodo)
 X_train, X_test, y_train, y_test, U_img = split_dataset(L,porcentaje,metodo)
 
+clasificador = training(X_train,y_train)
+X_test,y_test = test(X_test,y_test)
+clasificador.score()
+
+
+
+batch_set = return_batch_set(U_img,batch_size)[count]
+
 while batch_size*count < 0.2:
-  clasificador = training(X_train,y_train,X_test,y_test)
-  print(clasificador)
-  batch_set = return_batch_set(U_img,batch_size)[count]
   count += 1
+  clasificador = training(X_train,y_train,X_test,y_test)
+  batch_set = return_batch_set(U_img,batch_size)[count]
   print(count,len(batch_set))
