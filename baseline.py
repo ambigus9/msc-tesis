@@ -59,7 +59,7 @@ def test(X_test,y_test):
   X_test = normalizar( np.array(caracteristicas_test) )
   return X_test, y_test
 
-def split_dataset(L,porcentaje,metodo):
+def split_dataset(L,metodo):
   clases = list()
   imagenes = list()
   for root, dirs, files in os.walk(os.path.abspath("/content/gdrive/My Drive/msc-miguel/datasets/"+L+"/Images")) :
@@ -69,15 +69,18 @@ def split_dataset(L,porcentaje,metodo):
             imagenes.append(os.path.join(root, file))
 
   # Dividir L y U
-  L_img = imagenes[:int(len(clases)*0.5)]
-  L_class = clases[:int(len(clases)*0.5)]
-  U_img = imagenes[int(len(clases)*0.5):int(len(clases)*(0.5+porcentaje))]
-  print("L_len : ",len(L_img))
-  print("U_len : ",len(U_img))
-  
+  # X_train, X_test, y_train, y_test
+  # L_img, U_img, L_class, U_class = train_test_split(imagenes, clases, test_size=0.5, random_state=1)
+
+  #L_img = imagenes[:int(len(clases)*0.5)]
+  #L_class = clases[:int(len(clases)*0.5)]
+  #U_img = imagenes[int(len(clases)*0.5):int(len(clases)*(0.5+porcentaje))]
+  #print("L_len : ",len(L_img))
+  #print("U_len : ",len(U_img))
+
   # Dividir train, val y test
   if metodo=='supervisado':
-    X_train, X_test, y_train, y_test = train_test_split(L_img, L_class, test_size=0.2, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(imagenes, clases, test_size=0.2, random_state=1)
     X_train, X_val, y_train , y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=1)
     
     print("train: ",len(X_train))
@@ -85,18 +88,21 @@ def split_dataset(L,porcentaje,metodo):
     print(" test: ",len(X_test))
     print("total: ",len(X_train)+len(X_val)+len(X_test))
     #return X_train, X_test, y_train, y_test, U_img
-    return X_train, X_val, X_test, y_train, y_val, y_test, U_img
+    return X_train, X_val, X_test, y_train, y_val, y_test
     
-  if metodo=='semi-supervisado': 
+  if metodo=='semi-supervisado':
+    L_img, U_img, L_class, U_class = train_test_split(imagenes, clases, test_size=0.5, random_state=1)
     X_train, X_test, y_train, y_test = train_test_split(L_img, L_class, test_size=0.4, random_state=1)
     X_train, X_val, y_train , y_val = train_test_split(X_train, y_train, test_size=0.66, random_state=1)
   
     print("train: ",len(X_train))
     print("  val: ",len(X_val))
     print(" test: ",len(X_test))
-    print("total: ",len(X_train)+len(X_val)+len(X_test))
+    print("total etiquetado: ",len(X_train)+len(X_val)+len(X_test))
+    print("total no-etiquetado: ",len(U_img))
+    print("total global: ",len(X_train)+len(X_val)+len(X_test)+len(U_img))
   
-  return X_train, X_test, y_train, y_test, U_img
+    return X_train, X_val, X_test, y_train, y_val, y_test, U_img, U_class
   
 def return_batch_set(U_img,batch_size):
   return np.split(np.array(U_img), int(1/batch_size))
@@ -107,19 +113,19 @@ LC = list()
 count = 0
 
 L = 'ucmerced'
-metodo = 'semi-supervisado'
 batch_size = 0.2
-porcentaje = 0.1
 
-X_train, X_test, y_train, y_test, U_img = split_dataset(L,porcentaje,metodo)
+X_train, X_val, X_test, y_train, y_val, y_test = split_dataset(L,'supervisado')
+print('\n')
+X_train_, X_val_, X_test_, y_train_, y_val_, y_test_, U_img_, U_class_ = split_dataset(L,'semi-supervisado')
 
 clasificador = training(X_train,y_train)
-X_test,y_test = test(X_test,y_test)
-clasificador.score()
-
-
+X_test_temp,y_test_temp = test(X_test,y_test)
+clasificador.score(X_test_temp,y_test_temp)
 
 batch_set = return_batch_set(U_img,batch_size)[count]
+
+prediccion,probabilidad = labeling(clasificador,batch_set,EL,LC)
 
 while batch_size*count < 0.2:
   count += 1
