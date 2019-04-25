@@ -46,7 +46,8 @@ def test(X_test,y_test):
   caracteristicas_test = deep_extractor(X_test)
   X_test = normalizar( np.array(caracteristicas_test) )
   print("Score: ",clasificador.score(X_test,y_test))
-  return X_test, y_test
+  pass
+  #return X_test, y_test
 
 def split_dataset(L,metodo):
   clases = list()
@@ -56,16 +57,6 @@ def split_dataset(L,metodo):
           if file.endswith(".tif"):
             clases.append(str(os.path.basename(os.path.normpath(root))))
             imagenes.append(os.path.join(root, file))
-
-  # Dividir L y U
-  # X_train, X_test, y_train, y_test
-  # L_img, U_img, L_class, U_class = train_test_split(imagenes, clases, test_size=0.5, random_state=1)
-
-  #L_img = imagenes[:int(len(clases)*0.5)]
-  #L_class = clases[:int(len(clases)*0.5)]
-  #U_img = imagenes[int(len(clases)*0.5):int(len(clases)*(0.5+porcentaje))]
-  #print("L_len : ",len(L_img))
-  #print("U_len : ",len(U_img))
 
   # Dividir train, val y test
   if metodo=='supervisado':
@@ -108,16 +99,14 @@ count = 0
 
 L = 'ucmerced'
 batch_size = 0.2
-porcentaje=0.1
+porcentaje = 0.1
 
 X_train, X_val, X_test, y_train, y_val, y_test, U_img, U_class = split_dataset(L,'semi-supervisado')
 
 clasificador = training(X_train,y_train)
-X_test_temp,y_test_temp = test(X_test,y_test)
-
+test(X_test,y_test)
 
 batch_set = return_batch_set(U_img,batch_size)[count]
-
 prediccion,probabilidad = labeling(clasificador,batch_set,EL,LC)
 
 while batch_size*count < 0.2:
