@@ -133,9 +133,9 @@ for i in range(len(probabilidad)):
 df = pd.DataFrame(todos)
 df.describe()
 
-clasificador = training(X_train,y_train)
+clasificador = update_training(X_train,y_train,EL)
 print('\n')
-test(X_test,y_test)
+test(clasificador,X_test,y_test)
 
 
 while batch_size*count < 0.2:
