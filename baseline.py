@@ -9,6 +9,7 @@ from keras.applications.resnet50 import preprocess_input
 from keras.models import Model
 import numpy as np
 import os
+import pandas as pd
 
 base_model = ResNet50(weights='imagenet')
 model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1000').output)
@@ -42,12 +43,11 @@ def labeling(clasificador,batch_set,EL,LC):
   y_pred_proba = clasificador.predict_proba(caracteristicas_batch_set)
   return y_pred, y_pred_proba
 
-def test(X_test,y_test):
+def test(clasificador,X_test,y_test):
   caracteristicas_test = deep_extractor(X_test)
   X_test = normalizar( np.array(caracteristicas_test) )
   print("Score: ",clasificador.score(X_test,y_test))
   pass
-  #return X_test, y_test
 
 def split_dataset(L,metodo):
   clases = list()
@@ -87,11 +87,20 @@ def split_dataset(L,metodo):
     print("total no-etiquetado: ",len(U_img))
     print("total global: ",len(X_train)+len(X_val)+len(X_test)+len(U_img))
   
-    return X_train, X_val, X_test, y_train, y_val, y_test, U_img, U_class
+    return X_train, X_val, X_test, y_train, y_val, y_test, U_img_, U_class_
   
 def return_batch_set(U_img,batch_size):
   return np.split(np.array(U_img), int(1/batch_size))
 
+def update_training(X_train,y_train,EL):
+  [X_train.append(i[0]) for i in EL]
+  [y_train.append(i[1]) for i in EL]
+  caracteristicas_train = deep_extractor(X_train)
+  X_train = normalizar( np.array(caracteristicas_train) )
+  # Entrenar SVM
+  clf = SVC(probability=True, kernel='linear', C=1.0)
+  clf.fit(X_train, y_train)
+  return clf
 
 EL = list()
 LC = list()
@@ -104,10 +113,30 @@ porcentaje = 0.1
 X_train, X_val, X_test, y_train, y_val, y_test, U_img, U_class = split_dataset(L,'semi-supervisado')
 
 clasificador = training(X_train,y_train)
+print('\n')
 test(X_test,y_test)
 
 batch_set = return_batch_set(U_img,batch_size)[count]
 prediccion,probabilidad = labeling(clasificador,batch_set,EL,LC)
+
+mejores,todos = [],[]
+
+# agregar a funcion labeling
+for i in range(len(probabilidad)):
+  todos.append([max(probabilidad[i]),prediccion[i]])
+  if max(probabilidad[i]) > 0.4:
+    mejores.append([max(probabilidad[i]),prediccion[i],batch_set[i]])
+    EL.append((batch_set[i],prediccion[i]))
+  else:
+    LC.append(batch_set[i])
+
+df = pd.DataFrame(todos)
+df.describe()
+
+clasificador = training(X_train,y_train)
+print('\n')
+test(X_test,y_test)
+
 
 while batch_size*count < 0.2:
   count += 1
