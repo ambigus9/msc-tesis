@@ -1,0 +1,18 @@
+docker pull bvlc/caffe:gpu
+
+nvidia-docker run -it bvlc/caffe:gpu bash
+
+apt-get update
+apt-get install vim
+
+git clone https://github.com/ambigus9/SSGF-for-HRRS-scene-classification.git
+mkdir csvfold
+
+vi selftraining.py
+
+#L48 caffe_path = "/home/hpc-126/caffe-master" -> "/opt/caffe/"
+#L257 SVM_deployPath = "model_protext/bvlc_reference_caffenet/deploy_svm_caffenet.prototxt" -> "deploy_svm_caffenet.prototxt"
+
+#Modelos
+wget http://dl.caffe.berkeleyvision.org/bvlc_reference_caffenet.caffemodel
+https://onedrive.live.com/?authkey=%21AAFW2-FVoxeVRck&id=4006CBB8476FF777%2117887&cid=4006CBB8476FF777
