@@ -126,10 +126,41 @@ print('\n')
 print('Supervised_score_'+red+': ',test_score(clasificador,X_test,y_test))
 
 # Self-training
+from sklearn import calibration
+
 metodo='semi-supervisado'
 L = 'ucmerced'
 batch_size = 0.1
 porcentaje = 0.2
+
+def training(X_train,y_train):
+  caracteristicas_train = deep_extractor(X_train)
+  X_train = np.array(caracteristicas_train)
+  # Entrenar SVM
+  clf = calibration.CalibratedClassifierCV(LinearSVC(C=100000))
+  clf.fit(X_train, y_train)
+  return clf
+
+def update_training(X_train,y_train,EL):
+  [X_train.append(i[0]) for i in EL]
+  [y_train.append(i[1]) for i in EL]
+  caracteristicas_train = deep_extractor(X_train)
+  X_train = np.array(caracteristicas_train)
+  # Entrenar SVM
+  clf = calibration.CalibratedClassifierCV(LinearSVC(C=100000))
+  clf.fit(X_train, y_train)
+  return clf
+
+def labeling(clasificador,batch_set,EL,LC):
+  caracteristicas_batch_set = np.array( deep_extractor(batch_set) )
+  y_pred = clasificador.predict(caracteristicas_batch_set)
+  y_pred_proba = clasificador.predict_proba(caracteristicas_batch_set)
+  for i in range(len(y_pred_proba)):
+    if max(y_pred_proba[i]) >= 0.8:
+      EL.append((batch_set[i],y_pred[i]))
+    else:
+      LC.append(batch_set[i])
+  pass
 
 def self_training(L,batch_size,porcentaje):
   EL,LC,iteraciones=[],[],[]
