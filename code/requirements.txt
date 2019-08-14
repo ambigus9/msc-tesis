@@ -1,1 +1,1 @@
-patchify
+image_slicer
