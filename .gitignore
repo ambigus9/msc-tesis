@@ -2,3 +2,5 @@ SSGF-for-HRRS-scene-classification/
 datasets/
 libsvm/
 .ipynb_checkpoints/
+data/paper_arabe/*.tif
+data/paper_chino/*.tif
