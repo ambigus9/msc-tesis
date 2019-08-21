@@ -4,3 +4,4 @@ libsvm/
 .ipynb_checkpoints/
 data/paper_arabe/*.tif
 data/paper_chino/*.tif
+results/jeddah/
