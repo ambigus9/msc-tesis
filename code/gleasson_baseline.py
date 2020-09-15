@@ -304,7 +304,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
                     verbose=1,
                     callbacks=[early])
 
-    if len(df_val) > 0:
+    if len(datos['df_val']) > 0:
         score1=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
         
     score2=finetune_model.evaluate(test1_generator,verbose=0,steps=STEP_SIZE_TEST1)
@@ -744,6 +744,7 @@ def ssl_global( archivos, csvs ):
                 modeloC = mod_tmpC
                 etapa = 'train_EL'
 
+            ## escribir en disco -> arquitectura,val,test1,test2, (modelo.h5 -> results/models/stage_arch.h5) -> csv -> results/csv/exp02_2020-09-15.csv
             mod_tmpA = entrenamiento(etapa,modeloA,datos,'ResNet152',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
             mod_tmpB = entrenamiento(etapa,modeloB,datos,'InceptionV3',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
             mod_tmpC = entrenamiento(etapa,modeloC,datos,'InceptionV4',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
