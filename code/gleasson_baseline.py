@@ -22,17 +22,7 @@ from tensorflow.keras import regularizers
 #from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix
 #from sklearn.metrics import plot_confusion_matrix
 
-server = 'bivl2ab'
-dataset = 'gleasson'
-dataset_base = 'hardvard'
-metodo = 'semi-supervisado'
-
-csvs = '/home/miguel/gleasson/dataset/tma_info/'
-archivos = '/home/miguel/gleasson/'
-ruta = '/home/miguel/gleasson/'
-
-x_col_name = 'patch_name'
-y_col_name = 'grade_'
+from utils.train import get_model
 
 def get_data(archivos, csvs):
 
@@ -131,20 +121,9 @@ def transfer_learning(base_model, num_clases):
     
     return model
 
-def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,early_stopping,iteracion,batch_size):
-
-    if arquitectura == 'InceptionV3':
-        from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
-        base_model = InceptionV3(weights='imagenet',include_top=False,input_shape=(HEIGHT, WIDTH, 3))
-    if arquitectura == 'InceptionV4':
-        from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
-        base_model = InceptionResNetV2(weights='imagenet',include_top=False,input_shape=(HEIGHT, WIDTH, 3))
-    if arquitectura == 'ResNet152':
-        from tensorflow.keras.applications.resnet import ResNet152, preprocess_input
-        base_model = ResNet152(weights='imagenet',include_top=False,input_shape=(HEIGHT, WIDTH, 3))
-    if arquitectura == 'ResNet50':
-        from tensorflow.keras.applications.resnet import ResNet50, preprocess_input
-        base_model = ResNet50(weights='imagenet',include_top=False,input_shape=(HEIGHT, WIDTH, 3))
+def entrenamiento(kfold,etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,early_stopping,iteracion,batch_size,pipeline):
+    # AGREGAR PIPELINE CONFIG DICT AL FLUJO
+    base_model, preprocess_input = get_model(arquitectura,pipeline)
 
     if dataset == 'gleasson':
         datagen = ImageDataGenerator(
@@ -165,7 +144,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
                          dataframe=datos['df_train'], 
                          x_col=x_col_name, 
                          y_col=y_col_name, 
-                         target_size=(HEIGHT,WIDTH),
+                         target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical', 
                          batch_size=batch_size,
                          seed=42,
@@ -176,7 +155,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
                          dataframe=datos['df_train_EL'], 
                          x_col=x_col_name, 
                          y_col=y_col_name, 
-                         target_size=(HEIGHT,WIDTH),
+                         target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical', 
                          batch_size=batch_size,
                          seed=42,
@@ -193,7 +172,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
                         seed=42,
                         shuffle=True,
                         class_mode="categorical",
-                        target_size=(HEIGHT,WIDTH))
+                        target_size=(pipeline['img_height'],pipeline['img_width']))
     
     test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
 
@@ -206,7 +185,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
                       seed=42,
                       shuffle=False,
                       class_mode="categorical",
-                      target_size=(HEIGHT,WIDTH))
+                      target_size=(pipeline['img_height'],pipeline['img_width']))
 
         test2_generator=test_datagen.flow_from_dataframe(
                     dataframe=datos['df_test2'],
@@ -216,7 +195,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
                     seed=42,
                     shuffle=False,
                     class_mode="categorical",
-                    target_size=(HEIGHT,WIDTH))
+                    target_size=(pipeline['img_height'],pipeline['img_width']))
     
     if etapa == 'train' or etapa == 'train_EL':
         finetune_model = transfer_learning(base_model,clases)
@@ -335,9 +314,9 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
     guardar_logs(ruta,[logs[-1]])
 
     # Plot training & validation accuracy values
-    print(history.history)
-    print('--- Val acc ---')
-    print(history.history['val_acc'])
+    #print(history.history)
+    #print('--- Val acc ---')
+    #print(history.history['val_acc'])
     plt.plot(history.history['acc'])
     if len(datos['df_val'])>0: 
         plt.plot(history.history['val_acc'])
@@ -359,7 +338,7 @@ def entrenamiento(etapa,modelo,datos,arquitectura,LR,train_epochs,batch_epochs,e
 
     return finetune_model
 
-def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,datos):
+def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,datos,etapa):
 
     train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos)
     train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos)
@@ -422,18 +401,9 @@ def evaluar(modelo,train_generator,test_generator,STEP_SIZE_TEST):
 
 def generadores(etapa,arquitectura,datos):
 
-    if arquitectura=='InceptionV3':
-        print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
-        from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
-    if arquitectura=='InceptionV4':
-        print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
-        from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
-    if arquitectura=='ResNet152':
-        print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
-        from tensorflow.keras.applications.resnet import ResNet152, preprocess_input
-    if arquitectura=='ResNet50':
-        print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
-        from tensorflow.keras.applications.resnet import ResNet50, preprocess_input
+    print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
+    
+    _ , preprocess_input = get_model(arquitectura)
 
     if dataset == 'gleasson':
         datagen = ImageDataGenerator(
@@ -454,7 +424,7 @@ def generadores(etapa,arquitectura,datos):
                          dataframe=datos['df_train'], 
                          x_col=x_col_name, 
                          y_col=y_col_name, 
-                         target_size=(HEIGHT,WIDTH),
+                         target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical', 
                          batch_size=batch_size,
                          seed=42,
@@ -465,7 +435,7 @@ def generadores(etapa,arquitectura,datos):
                          dataframe=datos['df_train_EL'], 
                          x_col=x_col_name, 
                          y_col=y_col_name, 
-                         target_size=(HEIGHT,WIDTH),
+                         target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical', 
                          batch_size=batch_size,
                          seed=42,
@@ -481,7 +451,7 @@ def generadores(etapa,arquitectura,datos):
                         seed=42,
                         shuffle=True,
                         class_mode="categorical",
-                        target_size=(HEIGHT,WIDTH))
+                        target_size=(pipeline['img_height'],pipeline['img_width']))
     
     test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
     
@@ -494,7 +464,7 @@ def generadores(etapa,arquitectura,datos):
                       seed=42,
                       shuffle=False,
                       class_mode="categorical",
-                      target_size=(HEIGHT,WIDTH))
+                      target_size=(pipeline['img_height'],pipeline['img_width']))
 
         test2_generator=test_datagen.flow_from_dataframe(
                       dataframe=datos['df_test2'],
@@ -504,7 +474,7 @@ def generadores(etapa,arquitectura,datos):
                       seed=42,
                       shuffle=False,
                       class_mode="categorical",
-                      target_size=(HEIGHT,WIDTH))
+                      target_size=(pipeline['img_height'],pipeline['img_width']))
     
     STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
     if len(datos['df_val']):
@@ -522,7 +492,7 @@ def generadores(etapa,arquitectura,datos):
                       seed=42,
                       shuffle=False,
                       class_mode="categorical",
-                      target_size=(HEIGHT,WIDTH))
+                      target_size=(pipeline['img_height'],pipeline['img_width']))
 
         STEP_SIZE_BATCH=batchset_generator.n//batchset_generator.batch_size
 
@@ -574,74 +544,8 @@ def guardar_logs(ruta,lista):
         writer.writerow(l)
     file.close()
 
-#eliminar
-def version_automatica(ruta):
-    rutas = [ruta]
-    archivos = []
-    import os.path
-    for ruta in rutas:
-        for root, _, files in os.walk(os.path.abspath(ruta)):
-            for file in files:
-                extension = os.path.splitext(file)[1]
-                if extension == '.csv':
-                    archivos.append([os.path.join(root, file)])
-    if len(archivos)==0:
-        version=0
-    else:
-        version=int(archivos[-1][0].split('_')[-3])+1
-    return version
-
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
-
-if dataset == 'gleasson':
-    HEIGHT = 299
-    WIDTH = 299
-    augmenting_factor = 1.5
-    clases = 2
-    batch_size = 16
-    confianza = 0.90
-
-EL,LC,logs,test_cotraining,predicciones=[],[],[],[],[]
-data_aumentation = True
-early_stopping = True
-semi_method = 'co-training-multi'
-LR = 0.00001
-#peso_clases = {}
-#modalidad = 'medio'
-modalidad = 'lento'
-#configuracion =  { 
-#   dataset='covid19', modalidad='rapido',
-#   dataset='satellital', modalidad='medio',
-# }
-#version = version_automatica(ruta)
-version = 1
-porcentaje='10%'
-numero_lotes = 5
-label_active = False
-
-if modalidad == 'ultra':
-    train_epochs = 5
-    batch_epochs = 5
-
-if modalidad == 'rapido':
-    train_epochs = 10
-    batch_epochs = 10
-
-if modalidad == 'medio':
-    train_epochs = 20
-    batch_epochs = 20
-
-if modalidad == 'lento':
-    train_epochs = 30
-    batch_epochs = 30
-
-if dataset == 'gleasson':
-    logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu","test1_loss","test1_accu","test2_loss","test2_accu"])
-
-ruta = ''
-os.makedirs('logs', exist_ok=True)
-guardar_logs(ruta,[logs[-1]])
 
 def validar_existencia(df):
     parches_ = df[x_col_name].values.tolist()
@@ -651,15 +555,12 @@ def validar_existencia(df):
             print(num, parches_[i])
             num+=1
 
-#validar_existencia(df_train)
-
 def dividir_lotes(lista, divisiones):
     k, m = divmod(len(lista), divisiones)
     return (lista[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(divisiones))
 
 ## Preparar dataset
-
-def ssl_global( archivos, csvs ):
+def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
     datos = {}
     df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs)
@@ -745,15 +646,21 @@ def ssl_global( archivos, csvs ):
                 etapa = 'train_EL'
 
             ## escribir en disco -> arquitectura,val,test1,test2, (modelo.h5 -> results/models/stage_arch.h5) -> csv -> results/csv/exp02_2020-09-15.csv
-            mod_tmpA = entrenamiento(etapa,modeloA,datos,'ResNet152',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
-            mod_tmpB = entrenamiento(etapa,modeloB,datos,'InceptionV3',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
-            mod_tmpC = entrenamiento(etapa,modeloC,datos,'InceptionV4',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
+            mod_tmpA = entrenamiento(kfold,etapa,modeloA,datos,'ResNet152',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size,pipeline)
+            mod_tmpB = entrenamiento(kfold,etapa,modeloB,datos,'InceptionV3',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size,pipeline)
+            mod_tmpC = entrenamiento(kfold,etapa,modeloC,datos,'InceptionV4',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size,pipeline)
+            #mod_tmpD = entrenamiento(etapa,modeloA,datos,'ResNet152',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
+            #mod_tmpE = entrenamiento(etapa,modeloB,datos,'InceptionV3',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
+            #mod_tmpF = entrenamiento(etapa,modeloC,datos,'InceptionV4',0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
+
+            #for model in model_zoo:
+            #    mod_tmp = entrenamiento(etapa,modeloA,datos,model,0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
 
             if dataset == 'gleasson':
                 dataset_base = 'gleasson-patologo1'
-                print("\nCo-train1: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3'),datos)
+                print("\nCo-train1: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3',datos,etapa))
                 dataset_base = 'gleasson-patologo2'
-                print("\nCo-train2: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3'),datos)
+                print("\nCo-train2: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3',datos,etapa))
 
             if iteracion < numero_lotes:
                 
@@ -786,4 +693,75 @@ def ssl_global( archivos, csvs ):
     end = time.time()
     print(end - start)
 
-ssl_global( archivos, csvs )
+pipeline = {}
+
+server = 'bivl2ab'
+dataset = 'gleasson'
+dataset_base = 'hardvard'
+metodo = 'semi-supervisado'
+
+csvs = '/home/miguel/gleasson/dataset/tma_info/'
+archivos = '/home/miguel/gleasson/'
+ruta = '/home/miguel/gleasson/'
+
+x_col_name = 'patch_name'
+y_col_name = 'grade_'
+
+if dataset == 'gleasson':
+    pipeline['img_height'] = 299
+    pipeline['img_width'] = 299
+    #HEIGHT = 299
+    #WIDTH = 299
+    augmenting_factor = 1.5
+    clases = 2
+    batch_size = 16
+    confianza = 0.90
+
+
+
+EL,LC,logs,test_cotraining,predicciones=[],[],[],[],[]
+data_aumentation = True
+early_stopping = True
+semi_method = 'co-training-multi'
+LR = 0.00001
+#peso_clases = {}
+modalidad = 'lento'
+#configuracion =  { 
+#   dataset='covid19', modalidad='rapido',
+#   dataset='satellital', modalidad='medio',
+# }
+#version = version_automatica(ruta)
+version = 1
+porcentaje='10%'
+numero_lotes = 5
+label_active = False
+
+if modalidad == 'ultra':
+    train_epochs = 5
+    batch_epochs = 5
+
+if modalidad == 'rapido':
+    train_epochs = 10
+    batch_epochs = 10
+
+if modalidad == 'medio':
+    train_epochs = 20
+    batch_epochs = 20
+
+if modalidad == 'lento':
+    train_epochs = 30
+    batch_epochs = 30
+
+if dataset == 'gleasson':
+    logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu","test1_loss","test1_accu","test2_loss","test2_accu"])
+
+ruta = ''
+os.makedirs('logs', exist_ok=True)
+guardar_logs(ruta,[logs[-1]])
+
+model_zoo = [ 'InceptionV3', 'InceptionV4', 
+'ResNet50', 'ResNet101', 'ResNet152', 
+'DenseNet121', 'Dense169', 'Dense201', 
+'NASNetLarge', 'Xception']
+
+ssl_global( archivos, model_zoo , csvs, pipeline )
