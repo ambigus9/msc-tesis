@@ -1,7 +1,7 @@
 # pip install pandas scikit-learn Pillow
 import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID";
-os.environ["CUDA_VISIBLE_DEVICES"]="1";
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 import pandas as pd
 import numpy as np
@@ -237,7 +237,7 @@ def entrenamiento(kfold,etapa,modelo,datos,arquitectura,LR,train_epochs,batch_ep
         metrics = ['accuracy']#, tf.keras.metrics.AUC(name='auc', multi_label=True)]
         # calcular pesos de cada clase
         total = datos_entrenamiento.shape[0]
-        classes = datos_entrenamiento.groupby(y_col_name).count().index.values
+        #classes = datos_entrenamiento.groupby(y_col_name).count().index.values
         weights = (total/datos_entrenamiento.groupby(y_col_name).count().values)/3
         # rx normal:0, covid:1, pneumonia:2
         peso_clases = {0:weights[0][0], 1:weights[1][0], 2:weights[2][0]}
@@ -245,7 +245,7 @@ def entrenamiento(kfold,etapa,modelo,datos,arquitectura,LR,train_epochs,batch_ep
         metrics = ['accuracy']#, tf.keras.metrics.AUC(name='auc', multi_label=True)]
         # calcular pesos de cada clase
         total = datos_entrenamiento.shape[0]
-        classes = datos_entrenamiento.groupby(y_col_name).count().index.values
+        #classes = datos_entrenamiento.groupby(y_col_name).count().index.values
         weights = (total/datos_entrenamiento.groupby(y_col_name).count().values)/2
         # ct covid:0, no covid:1
         peso_clases = {0:weights[0][0], 1:weights[1][0]}
@@ -338,11 +338,11 @@ def entrenamiento(kfold,etapa,modelo,datos,arquitectura,LR,train_epochs,batch_ep
 
     return finetune_model
 
-def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,datos,etapa):
+def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,datos,dataset_base,etapa,kfold,iteracion,pipeline):
 
-    train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos)
-    train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos)
-    train_generator_arch3,test1_generator_arch3,STEP_SIZE_TEST1_arch3=generadores(etapa,arquitectura3,datos)
+    train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,dataset_base)
+    train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,dataset_base)
+    train_generator_arch3,test1_generator_arch3,STEP_SIZE_TEST1_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,dataset_base)
 
     df1=evaluar(modelo1,train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1)
     df2=evaluar(modelo2,train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2)
@@ -357,7 +357,7 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquite
             indice_prob_max = probabilidades.argmax()
 
             clases = np.array([df1['Predictions'][i],df2['Predictions'][i],df3['Predictions'][i]])
-            indice_clas_max = clases.argmax()
+            #indice_clas_max = clases.argmax() (relevant variable)
 
             real = np.array([df1['Filename'][i],df2['Filename'][i],df3['Filename'][i]])
             predicciones.append([real[indice_prob_max],clases[indice_prob_max]])
@@ -399,11 +399,11 @@ def evaluar(modelo,train_generator,test_generator,STEP_SIZE_TEST):
                           "Max_Probability":predicted_class_probab})
     return results
 
-def generadores(etapa,arquitectura,datos):
+def generadores(etapa,arquitectura,datos,pipeline,label_active,dataset_base):
 
-    print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
+    #print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
     
-    _ , preprocess_input = get_model(arquitectura)
+    _ , preprocess_input = get_model(arquitectura, pipeline)
 
     if dataset == 'gleasson':
         datagen = ImageDataGenerator(
@@ -441,17 +441,17 @@ def generadores(etapa,arquitectura,datos):
                          seed=42,
                          shuffle=True)
     
-    if len(datos['df_val'])>0:
-        val_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)   
-        valid_generator=val_datagen.flow_from_dataframe(
-                        dataframe=datos['df_val'],
-                        x_col=x_col_name,
-                        y_col=y_col_name,
-                        batch_size=batch_size,
-                        seed=42,
-                        shuffle=True,
-                        class_mode="categorical",
-                        target_size=(pipeline['img_height'],pipeline['img_width']))
+    #if len(datos['df_val'])>0:
+    #    val_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)   
+    #    valid_generator=val_datagen.flow_from_dataframe(
+    #                    dataframe=datos['df_val'],
+    #                    x_col=x_col_name,
+    #                    y_col=y_col_name,
+    #                    batch_size=batch_size,
+    #                    seed=42,
+    #                    shuffle=True,
+    #                    class_mode="categorical",
+    #                    target_size=(pipeline['img_height'],pipeline['img_width']))
     
     test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
     
@@ -476,9 +476,9 @@ def generadores(etapa,arquitectura,datos):
                       class_mode="categorical",
                       target_size=(pipeline['img_height'],pipeline['img_width']))
     
-    STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
-    if len(datos['df_val']):
-        STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
+    #STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
+    #if len(datos['df_val']):
+    #    STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
     STEP_SIZE_TEST1=test1_generator.n//test1_generator.batch_size
 
     if label_active:
@@ -505,13 +505,13 @@ def generadores(etapa,arquitectura,datos):
     if dataset_base == 'gleasson-patologo1':
         return train_generator,test1_generator,STEP_SIZE_TEST1
 
-def labeling(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos):
+def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos,pipeline):
     etiquetados_EL = 0
     etiquetados_LC = 0
     
-    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa,arquitectura1,datos)
-    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa,arquitectura2,datos)
-    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa,arquitectura3,datos)
+    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa,arquitectura1,datos,pipeline,True,None)
+    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa,arquitectura2,datos,pipeline,True,None)
+    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa,arquitectura3,datos,pipeline,True,None)
 
     df1=evaluar(modelo1,train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1)
     df2=evaluar(modelo2,train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2)
@@ -536,7 +536,7 @@ def guardar_logs(ruta,lista):
         archivo = "{}logs/logs_{}_{}_{}_{}_{}_{}.csv".format(ruta,dataset,dataset_base,porcentaje,version,modalidad,str(confianza).replace('0.',''))
     if metodo == 'supervisado':
         archivo = "{}logs/logs_{}_{}_{}_{}.csv".format(ruta,dataset,dataset_base,version,modalidad)
-    carpeta = ruta+'logs/'
+    #carpeta = ruta+'logs/'
 
     file = open(archivo, "a")
     writer = csv.writer(file, delimiter = ",")
@@ -657,17 +657,15 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             #    mod_tmp = entrenamiento(etapa,modeloA,datos,model,0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size)
 
             if dataset == 'gleasson':
-                dataset_base = 'gleasson-patologo1'
-                print("\nCo-train1: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3',datos,etapa))
-                dataset_base = 'gleasson-patologo2'
-                print("\nCo-train2: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3',datos,etapa))
+                print("\nCo-train1: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3','gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline))
+                print("\nCo-train2: \n",evaluate_cotrain(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3','gleasson-patologo2',datos,etapa,kfold,iteracion,pipeline))
 
             if iteracion < numero_lotes:
                 
                 df_batchset = batch_set[iteracion]
                 df_batchset.columns = [x_col_name,y_col_name]
                 df_batchset[y_col_name] = '0'
-                LC_backup = LC.copy()
+                #LC_backup = LC.copy()
             else:
                 if  iteracion == numero_lotes:
                     df_LC = pd.DataFrame(LC)
@@ -682,9 +680,9 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             datos['df_batchset'] = df_batchset
             
-            label_active = True
-            EL,LC = labeling(mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3',EL,LC,datos)
-            label_active = False
+            #label_active = True
+            EL,LC = labeling(etapa,mod_tmpA,mod_tmpB,mod_tmpC,'ResNet152','InceptionV4','InceptionV3',EL,LC,datos,pipeline)
+            #label_active = False
             df_EL = pd.DataFrame(EL,columns=[x_col_name,y_col_name])
             df_train_EL = pd.concat([df_train,df_EL])
             datos['df_train_EL'] = df_train_EL
