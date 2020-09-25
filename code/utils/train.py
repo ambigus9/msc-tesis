@@ -1,5 +1,11 @@
 def get_model(architecture, pipeline): 
+
+    #print("\n")
+    print("="*len(architecture))
     print(architecture)
+    print("="*len(architecture))
+    #print("\n")
+
     if architecture == 'InceptionV3':
         from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
         base_model = InceptionV3(weights='imagenet',include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
@@ -21,10 +27,10 @@ def get_model(architecture, pipeline):
     if architecture == 'DenseNet169':
         from tensorflow.keras.applications.densenet import DenseNet169, preprocess_input
         base_model = DenseNet169(weights='imagenet',include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
-    if architecture == 'DenseNet201':
+    if architecture == 'DenseNet201': 
         from tensorflow.keras.applications.densenet import DenseNet201, preprocess_input
         base_model = DenseNet201(weights='imagenet',include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
-    if architecture == 'NASNetLarge':
+    if architecture == 'NASNetLarge': 
         from tensorflow.keras.applications.nasnet import NASNetLarge, preprocess_input
         base_model = NASNetLarge(weights='imagenet',include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
     if architecture == 'Xception':
