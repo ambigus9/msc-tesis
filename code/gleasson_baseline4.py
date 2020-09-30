@@ -592,6 +592,7 @@ def generadores(etapa,arquitectura,datos,pipeline,label_active,dataset_base):
         return train_generator,test1_generator,STEP_SIZE_TEST1
 
 def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos,pipeline):
+    #arch_scores = {}
     etiquetados_EL = 0
     etiquetados_LC = 0
     
@@ -604,11 +605,17 @@ def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitect
     df3=evaluar(modelo3,train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3)
 
     for i in range(len(df1)):
+
+        arch_scores = {}
+        arch_scores[arquitectura1] = df1['Max_Probability'][i]
+        arch_scores[arquitectura2] = df2['Max_Probability'][i]
+        arch_scores[arquitectura3] = df3['Max_Probability'][i]
+
         if (df1['Predictions'][i] == df2['Predictions'][i]) and (df1['Predictions'][i] == df3['Predictions'][i]) and (df1['Max_Probability'][i]>=confianza) and (df2['Max_Probability'][i]>=confianza) and (df3['Max_Probability'][i]>=confianza):
-            EL.append([df1['Filename'][i],df1['Predictions'][i]])
+            EL.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             etiquetados_EL += 1
         else:
-            LC.append([df1['Filename'][i],df1['Predictions'][i]])
+            LC.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             etiquetados_LC += 1
 
     print('etiquetados EL {} LC {}'.format(etiquetados_EL, etiquetados_LC))
@@ -813,12 +820,17 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             datos['df_batchset'] = df_batchset
             
             #label_active = True
-            EL,LC = labeling(etapa,mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,EL,LC,datos,pipeline)
+            EL, LC = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline)
             logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL),len(LC)])
             save_logs(logs_label,'label',pipeline)
             #label_active = False
-            df_EL = pd.DataFrame(EL,columns=[x_col_name,y_col_name])
-            df_train_EL = pd.concat([df_train,df_EL])
+            df_EL = pd.DataFrame(EL, columns=[x_col_name, y_col_name, 'arch_scores'])
+            df_EL.to_parquet('results/data_EL.pickle')
+
+            df_LC = pd.DataFrame(LC, columns=[x_col_name, y_col_name, 'arch_scores'])
+            df_LC.to_parquet('results/data_LC.pickle')
+
+            df_train_EL = pd.concat([df_train,df_EL.iloc[:,:1]])
             datos['df_train_EL'] = df_train_EL
             reset_keras()
             models_info = []
