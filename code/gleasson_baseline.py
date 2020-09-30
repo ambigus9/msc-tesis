@@ -338,7 +338,7 @@ def entrenamiento(kfold,etapa,modelo,datos,arquitectura,LR,train_epochs,batch_ep
 
     return finetune_model
 
-def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,datos,dataset_base,etapa,kfold,iteracion,pipeline):
+def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,dataset_base,datos,etapa,kfold,iteracion,pipeline):
 
     train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,dataset_base)
     train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,dataset_base)

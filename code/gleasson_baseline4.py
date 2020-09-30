@@ -1,7 +1,12 @@
 # pip install pandas scikit-learn Pillow
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="3"
+
+SEED = 8128
+
+os.environ['PYTHONHASHSEED']=str(SEED)
+os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
 import pandas as pd
 import numpy as np
@@ -12,6 +17,12 @@ from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
 
 import tensorflow
+  # new flag present in tf 2.0+
+# # Agregar semilla
+import random
+random.seed(SEED)
+np.random.seed(SEED)
+tensorflow.random.set_random_seed(SEED)
 
 #USAR SOLO MEMORIA NECESARIA
 gpus = tensorflow.config.experimental.list_physical_devices('GPU')
@@ -264,6 +275,25 @@ def entrenamiento(kfold,etapa,datos,arquitectura,LR,train_epochs,batch_epochs,ea
         metrics = ['accuracy']#, tf.keras.metrics.AUC(name='auc', multi_label=True)]
         loss='categorical_crossentropy'
         peso_clases = {}
+        total = datos_entrenamiento.shape[0]
+        #classes = datos_entrenamiento.groupby(y_col_name).count().index.values
+        weights = (total/datos_entrenamiento.groupby(y_col_name).count().values)/4
+        # rx normal:0, covid:1, pneumonia:2
+        peso_clases = {0:weights[0][0], 1:weights[1][0], 2:weights[2][0], 3:weights[3][0]}
+
+        #print(datos_entrenamiento.groupby(y_col_name))
+        print(datos_entrenamiento.groupby(y_col_name).count())
+        print(datos_entrenamiento.groupby(y_col_name).count().values)
+        max_class_num = np.argmax(datos_entrenamiento.groupby(y_col_name).count().values)
+        print('id_maximo',max_class_num)
+        
+        peso_clases = {}
+        class_num = datos_entrenamiento.groupby(y_col_name).count().values
+        print('num_maximo',class_num[max_class_num])
+        weights = class_num[max_class_num] / datos_entrenamiento.groupby(y_col_name).count().values
+        print(weights)
+        peso_clases = {0:weights[0][0], 1:weights[1][0], 2:weights[2][0], 3:weights[3][0]}
+        print(peso_clases)
 
     if clases==3:
         metrics = ['accuracy']#, tf.keras.metrics.AUC(name='auc', multi_label=True)]
@@ -293,7 +323,12 @@ def entrenamiento(kfold,etapa,datos,arquitectura,LR,train_epochs,batch_epochs,ea
     # np.random.seed(8128)
     # tf.random.set_seed(8128)
 
-    if len(peso_clases)>0:          
+    if len(peso_clases)>0:
+        print("\n")
+        print("ESTOY USANDO PESADO DE CLASES!")      
+        print(peso_clases)
+        print("##############################")
+        print("\n")
         history = finetune_model.fit(
                     train_generator,
                     epochs=NUM_EPOCHS, workers=1, 
@@ -385,6 +420,8 @@ def entrenamiento(kfold,etapa,datos,arquitectura,LR,train_epochs,batch_epochs,ea
     #pipeline['logs_model']
     #time_training
     model_performance['val_acc'] = score1[1]
+    model_performance['test1_acc'] = score2[1]
+    model_performance['test2_acc'] = score3[1]
     return finetune_model , model_performance
 
 def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,dataset_base,datos,etapa,kfold,iteracion,pipeline):
@@ -646,6 +683,11 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             df_train         = pd.DataFrame([fold1[0][1],fold1[0][3]]).T
             df_train.columns = [x_col_name,y_col_name]
 
+            df_train.to_csv('data/train.csv',index=False)
+            df_val.to_csv('data/val.csv',index=False)
+            df_test1.to_csv('data/test1.csv',index=False)
+            df_test2.to_csv('data/test2.csv',index=False)
+
             # Extracción de muestras de train
             #X_train_=df_train.iloc[:,0].values.tolist()
             #y_train_=df_train.iloc[:,1].values.tolist()
@@ -670,11 +712,22 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
         for iteracion in range(numero_lotes*1):
 
-            # # Agregar semilla
             import random
-            random.seed(8128)
-            np.random.seed(8128)
-            tf.random.set_random_seed(8128)
+            random.seed(SEED)
+            np.random.seed(SEED)
+            tensorflow.random.set_random_seed(SEED)
+
+
+            # # Agregar semilla
+            #import random
+            #random.seed(8128)
+            #np.random.seed(8128)
+            #tensorflow.random.set_random_seed(8128)
+
+            #from numpy import seed
+            #seed(8128)
+            #from tensorflow import set_random_seed
+            #set_random_seed(8128)
 
             # Agregar semilla
             #import random
@@ -710,10 +763,16 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             for model in model_zoo:
                 model_memory , model_performance = entrenamiento(kfold,etapa,datos,model,0.00001,train_epochs,batch_epochs,early_stopping,iteracion,batch_size,pipeline)            
-                models_info.append([model_memory , model, model_performance['val_acc']])
+                #models_info.append([model_memory , model, model_performance['val_acc']])
+                models_info.append([model_memory , model, model_performance['test1_acc']])
+            
+            #if semi_method == 'supervised':
+            #    break
 
-            df_models_performance = pd.DataFrame(models_info, columns=['model_path','model_architecture','model_val_acc'])
-            top3_models = df_models_performance.sort_values('model_val_acc',ascending=False).iloc[:3,:].reset_index().drop('index',axis=1)
+            #df_models_performance = pd.DataFrame(models_info, columns=['model_path','model_architecture','model_val_acc'])
+            #top3_models = df_models_performance.sort_values('model_val_acc',ascending=False).iloc[:3,:].reset_index().drop('index',axis=1)
+            df_models_performance = pd.DataFrame(models_info, columns=['model_path','model_architecture','model_test1_acc'])
+            top3_models = df_models_performance.sort_values('model_test1_acc',ascending=False).iloc[:3,:].reset_index().drop('index',axis=1)
 
             mod_top1, arch_top1 = top3_models.loc[0,'model_path'],top3_models.loc[0,'model_architecture']
             mod_top2, arch_top2 = top3_models.loc[1,'model_path'],top3_models.loc[1,'model_architecture']
@@ -729,6 +788,9 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             if dataset == 'gleasson':
                 print("\nCo-train1: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline))
                 print("\nCo-train2: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo2',datos,etapa,kfold,iteracion,pipeline))
+
+            if semi_method == 'supervised':
+                break
 
             if iteracion < numero_lotes:
                 
@@ -781,18 +843,20 @@ x_col_name = 'patch_name'
 y_col_name = 'grade_'
 
 if dataset == 'gleasson':
+    pipeline['weights'] = 'imagenet'
+    #pipeline['weights'] = None
     pipeline['img_height'] = 299
     pipeline['img_width'] = 299
     #HEIGHT = 299
     #WIDTH = 299
     augmenting_factor = 1.5
-    clases = 2
+    clases = 4
     batch_size = 16
     confianza = 0.90
     
     pipeline['save_model'] = False
     pipeline['save_path_logs'] = 'logs/'
-    pipeline['id'] = 1
+    pipeline['id'] = 11
 
 EL,LC,test_cotraining,predicciones = [],[],[],[]
 logs,logs_time,logs_label = [], [], []
@@ -800,15 +864,16 @@ logs,logs_time,logs_label = [], [], []
 data_aumentation = True
 early_stopping = True
 semi_method = 'co-training-multi'
+#semi_method = 'supervised'
 LR = 0.00001
 #peso_clases = {}
-modalidad = 'medio'
+modalidad = 'lento'
 #configuracion =  { 
 #   dataset='covid19', modalidad='rapido',
 #   dataset='satellital', modalidad='medio',
 # }
 #version = version_automatica(ruta)
-version = 1
+version = pipeline["id"]
 porcentaje='10%'
 numero_lotes = 5
 label_active = False
@@ -853,11 +918,13 @@ save_logs(logs_label,'label',pipeline)
 #'DenseNet121', 'Dense169', 'Dense201', 
 #'NASNetLarge', 'Xception']
 
-model_zoo = [ 'InceptionV3', 'InceptionV4', 
-'ResNet50', 'ResNet101', 
-'DenseNet121', 'Dense169', 
-'Xception' ]
+#ACA VOY
+#model_zoo = [ 'InceptionV3', 'InceptionV4', 
+#'ResNet50', 'ResNet101', 
+#'DenseNet121', 'DenseNet169', 
+#'Xception' ]
 
 #model_zoo = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
+model_zoo = ['Xception','ResNet101','DenseNet169']
 
 ssl_global( archivos, model_zoo , csvs, pipeline )
