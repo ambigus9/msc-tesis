@@ -450,11 +450,11 @@ def entrenamiento(kfold,etapa,datos,arquitectura,train_epochs,batch_epochs,early
     model_performance['test2_acc'] = score3[1]
     return finetune_model , model_performance
 
-def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,dataset_base,datos,etapa,kfold,iteracion,pipeline):
+def evaluate_cotrain(modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,dataset_base,datos,etapa,kfold,iteracion,pipeline,models_info):
 
-    train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,dataset_base)
-    train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,dataset_base)
-    train_generator_arch3,test1_generator_arch3,STEP_SIZE_TEST1_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,dataset_base)
+    train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,dataset_base,iteracion,models_info)
+    train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,dataset_base,iteracion,models_info)
+    train_generator_arch3,test1_generator_arch3,STEP_SIZE_TEST1_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,dataset_base,iteracion,models_info)
 
     df1=evaluar(modelo1,train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1)
     df2=evaluar(modelo2,train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2)
@@ -518,7 +518,7 @@ def evaluar(modelo,train_generator,test_generator,STEP_SIZE_TEST):
                           "Max_Probability":predicted_class_probab})
     return results
 
-def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base):
+def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iteracion, models_info):
 
     #print("Arquitectura {} en iteracion {}".format(arquitectura,iteracion))
     
@@ -625,14 +625,14 @@ def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base):
     if dataset_base == 'gleasson-patologo1':
         return train_generator,test1_generator,STEP_SIZE_TEST1
 
-def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos,pipeline):
+def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos,pipeline,iteracion,models_info):
     #arch_scores = {}
     etiquetados_EL = 0
     etiquetados_LC = 0
-    
-    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa,arquitectura1,datos,pipeline,True,None)
-    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa,arquitectura2,datos,pipeline,True,None)
-    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa,arquitectura3,datos,pipeline,True,None)
+    #generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iteracion, models_info)
+    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa,arquitectura1,datos,pipeline,True,None,iteracion,models_info)
+    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa,arquitectura2,datos,pipeline,True,None,iteracion,models_info)
+    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa,arquitectura3,datos,pipeline,True,None,iteracion,models_info)
 
     df1=evaluar(modelo1,train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1)
     df2=evaluar(modelo2,train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2)
@@ -887,8 +887,8 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             #mod_top3, arch_top3 = load_model(top3_models.loc[2,'model_path']) , top3_models.loc[2,'model_architecture']
 
             if dataset == 'gleasson':
-                print("\nCo-train1: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline))
-                print("\nCo-train2: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo2',datos,etapa,kfold,iteracion,pipeline))
+                print("\nCo-train1: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline,models_info))
+                print("\nCo-train2: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo2',datos,etapa,kfold,iteracion,pipeline,models_info))
 
             if semi_method == 'supervised':
                 break
@@ -914,7 +914,7 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             datos['df_batchset'] = df_batchset
             
             #label_active = True
-            EL, LC = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline)
+            EL, LC = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline,iteracion,models_info)
             logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL),len(LC)])
             save_logs(logs_label,'label',pipeline)
             #label_active = False
