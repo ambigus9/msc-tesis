@@ -35,8 +35,6 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Dense, Activation, Flatten, Dropout, GlobalAveragePooling2D
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras import regularizers
-#from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix
-#from sklearn.metrics import plot_confusion_matrix
 
 from utils.train import get_model
 
@@ -629,8 +627,8 @@ def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitect
             etiquetados_LC += 1
 
     print('etiquetados EL {} LC {}'.format(etiquetados_EL, etiquetados_LC))
-    return EL, LC
-    #return EL, LC, EL_iter, LC_iter # EXP28
+    #return EL, LC
+    return EL, LC, EL_iter, LC_iter # EXP28
 
 def guardar_logs(ruta,lista):
     #guardar lista de listas en csv crear csv
@@ -807,8 +805,8 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             datos['df_batchset'] = df_batchset
             
-            EL, LC = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline,iteracion,models_info) # EXP28
-            #EL, LC, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline,iteracion,models_info)
+            #EL, LC = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline,iteracion,models_info) # EXP28
+            EL, LC, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline,iteracion,models_info)
             logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter)])
             save_logs(logs_label,'label',pipeline)
 
