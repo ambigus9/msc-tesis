@@ -1,0 +1,10 @@
+{
+    "weights" : "imagenet",
+    "img_height" : 299,
+    "img_width" : 299,
+    "augmenting_factor" : 1.5,
+    "class_num": 2,
+    "batch_size": 16,
+    "save_model": False,
+    
+}
