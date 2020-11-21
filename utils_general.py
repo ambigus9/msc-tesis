@@ -5,8 +5,8 @@ from tensorflow.keras.backend import clear_session
 
 def guardar_logs(ruta,lista):
     #guardar lista de listas en csv crear csv
-    import csv
-    import os
+    #import csv
+    #import os
     if metodo == 'semi-supervisado':
         archivo = "{}logs/logs_{}_{}_{}_{}_{}_{}.csv".format(ruta,dataset,dataset_base,porcentaje,version,modalidad,str(pipeline["ssl_threshold"]).replace('0.',''))
     if metodo == 'supervisado':

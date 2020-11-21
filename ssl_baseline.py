@@ -1,8 +1,10 @@
 "MSC Thesis"
 
+
 import gc
 import os
 import csv
+import time
 import random
 import tensorflow
 import pandas as pd
@@ -19,8 +21,17 @@ from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras import regularizers
 #from tensorflow.keras.backend import clear_session
 
-from utils.train import get_model
-from utils.get_data import procesar_dataset
+from utils_data import procesar_dataset
+from utils_data import get_data
+from utils_data import dividir_lotes
+from utils_preprocess import dividir_balanceado2
+from utils_general import save_logs
+
+from ssl_train import get_model
+from ssl_train import entrenamiento
+from ssl_eval import evaluate_cotrain
+from ssl_label import labeling
+from ssl_stats import label_stats
 
 SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -45,17 +56,17 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
     datos = {}
     models_info = {}
-    df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs)
+    #df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs, pipeline) ACA VOY
 
     # Medir tiempo de ejecucion
-    import time
+    #import time
     start = time.time()
     fold = dividir_balanceado2(df_train,4)
 
     for kfold in range(1):
 
         if dataset == 'gleasson':
-            import pandas as pd
+            #import pandas as pd
             df_train_58         = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
             df_train_58.columns = [x_col_name,y_col_name]
 
@@ -91,7 +102,7 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
         for iteracion in range(numero_lotes*1):
 
-            import random
+            #import random
             random.seed(SEED)
             np.random.seed(SEED)
             tensorflow.random.set_random_seed(SEED)
@@ -116,7 +127,7 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
                     'model_performance': model_performance['val_acc']
                 }
 
-            import pandas as pd
+            #import pandas as pd
             df_temp = pd.DataFrame(models_info).T
             top_models = df_temp.sort_values('model_performance', ascending=False)
             top_models = top_models.reset_index()['index'].values.tolist()[:3]
@@ -126,8 +137,8 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             mod_top3, arch_top3 = models_info[ top_models[2] ]['model_memory'] , top_models[2]
 
             if dataset == 'gleasson':
-                print("\nCo-train1: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline,models_info))
-                print("\nCo-train2: \n",evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo2',datos,etapa,kfold,iteracion,pipeline,models_info))
+                print("\nCo-train1: \n", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline,models_info))
+                print("\nCo-train2: \n", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo2',datos,etapa,kfold,iteracion,pipeline,models_info))
 
             if semi_method == 'supervised':
                 break
