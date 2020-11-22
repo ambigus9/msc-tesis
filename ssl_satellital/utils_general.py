@@ -2,22 +2,26 @@ import os
 import gc
 import csv
 from tensorflow.keras.backend import clear_session
+import matplotlib.pyplot as plt
 
-def guardar_logs(ruta,lista):
-    #guardar lista de listas en csv crear csv
-    #import csv
-    #import os
-    if metodo == 'semi-supervisado':
-        archivo = "{}logs/logs_{}_{}_{}_{}_{}_{}.csv".format(ruta,dataset,dataset_base,porcentaje,version,modalidad,str(pipeline["ssl_threshold"]).replace('0.',''))
-    if metodo == 'supervisado':
-        archivo = "{}logs/logs_{}_{}_{}_{}.csv".format(ruta,dataset,dataset_base,version,modalidad)
+def save_plots(history, architecture, pipeline):
+    # Plot training & validation accuracy values
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('Model accuracy - {}'.format(architecture))
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='upper left')
+    plt.savefig(pipeline["save_figs"]) # PENDIENTE -> GUARDAR CON CODIGO UNICO
 
-    file = open(archivo, "a")
-    writer = csv.writer(file, delimiter = ",")
-    for l in lista:
-        writer.writerow(l)
-    file.close()
-
+    # Plot training & validation loss values
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('Model loss - {}'.format(architecture))
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='upper left')
+    plt.savefig(pipeline["save_figs"]) # PENDIENTE -> GUARDAR CON CODIGO UNICO
 
 def save_logs(logs, log_type, pipeline):
     ID = pipeline['id']

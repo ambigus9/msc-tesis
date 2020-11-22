@@ -1,6 +1,6 @@
 "SSL Labeling"
 
-from ml.generators import generadores
+from ml_generators import generadores
 from ssl_eval import evaluar
 
 def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos,pipeline,iteracion,models_info):

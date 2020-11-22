@@ -1,41 +1,31 @@
 "MSC Thesis"
 
-
-import gc
+#import gc
 import os
-import csv
+#import csv
 import time
 import random
 import tensorflow
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import StratifiedKFold
+#import matplotlib.pyplot as plt
+#from sklearn.model_selection import StratifiedKFold
 
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import Dense, Activation, Flatten, Dropout, GlobalAveragePooling2D
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras import regularizers
-#from tensorflow.keras.backend import clear_session
-
-from utils_data import procesar_dataset
-from utils_data import get_data
+from utils_data import process_dataset
+#from utils_data import get_dataset
 from utils_data import dividir_lotes
 from utils_preprocess import dividir_balanceado2
 from utils_general import save_logs
 
-from ssl_train import get_model
-from ssl_train import entrenamiento
+#from ssl_train import get_model
+from ssl_train import training
 from ssl_eval import evaluate_cotrain
 from ssl_label import labeling
 from ssl_stats import label_stats
 
 SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 os.environ['PYTHONHASHSEED']=str(SEED)
 os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
@@ -48,15 +38,15 @@ tensorflow.config.experimental.set_memory_growth(gpus[0], True)
 
 #df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs)
 
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
+#from tensorflow.keras.models import load_model
+#from tensorflow.keras.preprocessing import image
 
 ## Preparar dataset
-def ssl_global( archivos, model_zoo, csvs, pipeline ):
+def ssl_global(archivos, model_zoo, pipeline):
 
     datos = {}
     models_info = {}
-    #df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs, pipeline) ACA VOY
+    df_train, df_val, df_test = process_dataset(pipeline)
 
     # Medir tiempo de ejecucion
     #import time
@@ -79,12 +69,13 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             df_train.to_csv('data/train.csv',index=False)
             df_val.to_csv('data/val.csv',index=False)
-            df_test1.to_csv('data/test1.csv',index=False)
-            df_test2.to_csv('data/test2.csv',index=False)
+            df_test.to_csv('data/test.csv',index=False)
 
             df_U         = pd.DataFrame([fold1[0][0],fold1[0][2]]).T
             df_U.columns = [x_col_name,y_col_name]
             EL,LC        = [],[]
+            #datos["EL"] = []
+            #datos["LC"] = []
 
             print("train :",len(df_train))
             print("val   :",len(df_val))
@@ -92,13 +83,13 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             # Segmentación de U en lotes para etiquetar
             batch_set=list(dividir_lotes(df_U, numero_lotes))
-            for i in range(len(batch_set)):
+            #for i in range(len(batch_set)):
+            for i in enumerate(batch_set):
                 print(len(batch_set[i].iloc[:,0].values.tolist()))
 
         datos['df_train'] = df_train
         datos['df_val'] = df_val
-        datos['df_test1'] = df_test1
-        datos['df_test2'] = df_test2
+        datos['df_test'] = df_test
 
         for iteracion in range(numero_lotes*1):
 
@@ -120,7 +111,7 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             for model in model_zoo:
 
-                model_memory , model_performance = entrenamiento(kfold,etapa,datos,model,train_epochs,batch_epochs,early_stopping,iteracion,models_info,pipeline)
+                model_memory , model_performance = training(kfold,etapa,datos,model,train_epochs,batch_epochs,iteracion,models_info,pipeline)
 
                 models_info[model] = {
                     'model_memory': model_memory,
@@ -152,7 +143,8 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
                 if  iteracion == numero_lotes:
                     df_LC = pd.DataFrame(LC)
                     batch_set_LC=list(dividir_lotes(df_LC, numero_lotes))
-                    for i in range(len(batch_set_LC)):
+                    #for i in range(len(batch_set_LC)):
+                    for i in enumerate(batch_set_LC):
                         print(len(batch_set_LC[i].iloc[:,0].values.tolist()))
                     LC = []
 
@@ -162,7 +154,7 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
 
             datos['df_batchset'] = df_batchset
 
-            EL, LC, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC,datos,pipeline,iteracion,models_info)
+            EL, LC, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC, datos, pipeline, iteracion, models_info)
             #logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter)])
             #save_logs(logs_label,'label',pipeline)
 
@@ -191,7 +183,7 @@ def ssl_global( archivos, model_zoo, csvs, pipeline ):
             df_U_iter = pd.concat([df_EL_stats,df_LC_stats], ignore_index=True)
             #df_U_iter.describe()["arch_scores_mean"]["25%"]
             #df_U_iter = pd.concat([df_EL,df_LC], ignore_index=True)
-            #ssl_th = df_U_iter.describe()["arch_scores_mean"]["mean"]
+            ssl_th = df_U_iter.describe()["arch_scores_mean"]["mean"]
             #EXP 33
             #print("df_U_describe")
             #print(f"MEAN U_{iteracion}: {ssl_th}")
@@ -268,7 +260,8 @@ if dataset == 'satellital':
         }
     }
 
-EL,LC,test_cotraining,predicciones = [],[],[],[]
+#EL,LC,test_cotraining,predicciones = [],[],[],[]
+test_cotraining,predicciones = [],[]
 logs,logs_time,logs_label = [], [], []
 
 data_aumentation = True
@@ -312,3 +305,4 @@ save_logs(logs_label,'label',pipeline)
 
 model_zoo = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
 ssl_global( archivos, model_zoo , csvs, pipeline )
+

@@ -8,5 +8,8 @@
     "save_model": False,
     "x_col_name" = "imagen",
     "y_col_name" = "clase",
-    "ruta_base" = ""
+    "ruta_base" = "",
+    "transfer_learning" = "classic",
+    "save_figs" = "",
+    
 }

@@ -1,13 +1,26 @@
+"SSL train"
 
-def entrenamiento(  kfold,etapa,datos,arquitectura,train_epochs,
-                    batch_epochs,early_stopping,iteracion,models_info,pipeline  ):
-    import time
+import os
+import time
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
+
+from utils_general import save_plots
+from utils_general import save_logs
+
+from ml_strategy import transfer_learning_classic
+from ml_strategy import transfer_learning_soft
+
+def training(kfold, etapa, datos, architecture, train_epochs,
+                    batch_epochs, iteracion, models_info, pipeline):
+
     start_model = time.time()
-    base_model, preprocess_input = get_model(arquitectura, iteracion, models_info, pipeline)
+    base_model, preprocess_input = get_model(architecture, iteracion, models_info, pipeline)
     model_performance = {}
 
-    if dataset == 'gleasson':
-        datagen = ImageDataGenerator(
+    datagen = ImageDataGenerator(
                                     preprocessing_function=preprocess_input,
                                     rotation_range=40,
                                     width_shift_range=0.1,
@@ -23,8 +36,8 @@ def entrenamiento(  kfold,etapa,datos,arquitectura,train_epochs,
     if etapa=='train':
         train_generator = datagen.flow_from_dataframe(
                          dataframe=datos['df_train'],
-                         x_col=x_col_name,
-                         y_col=y_col_name,
+                         x_col=pipeline["x_col_name"],
+                         y_col=pipeline["y_col_name"],
                          target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical',
                          batch_size=pipeline["batch_size"],
@@ -34,8 +47,8 @@ def entrenamiento(  kfold,etapa,datos,arquitectura,train_epochs,
     if etapa=='train_EL':
         train_generator = datagen.flow_from_dataframe(
                          dataframe=datos['df_train_EL'],
-                         x_col=x_col_name,
-                         y_col=y_col_name,
+                         x_col=pipeline["x_col_name"],
+                         y_col=pipeline["y_col_name"],
                          target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical',
                          batch_size=pipeline["batch_size"],
@@ -47,8 +60,8 @@ def entrenamiento(  kfold,etapa,datos,arquitectura,train_epochs,
 
         valid_generator=val_datagen.flow_from_dataframe(
                         dataframe=datos['df_val'],
-                        x_col=x_col_name,
-                        y_col=y_col_name,
+                        x_col=pipeline["x_col_name"],
+                        y_col=pipeline["y_col_name"],
                         batch_size=pipeline["batch_size"],
                         seed=42,
                         shuffle=True,
@@ -57,202 +70,93 @@ def entrenamiento(  kfold,etapa,datos,arquitectura,train_epochs,
 
     test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
 
-    if dataset=='gleasson':
-        test1_generator=test_datagen.flow_from_dataframe(
+    test_generator=test_datagen.flow_from_dataframe(
                       dataframe=datos['df_test1'],
-                      x_col="patch_name1",
-                      y_col="grade_1",
+                      x_col=pipeline["x_col_name"],
+                      y_col=pipeline["y_col_name"],
                       batch_size=pipeline["batch_size"],
                       seed=42,
                       shuffle=False,
                       class_mode="categorical",
                       target_size=(pipeline['img_height'],pipeline['img_width']))
 
-        test2_generator=test_datagen.flow_from_dataframe(
-                    dataframe=datos['df_test2'],
-                    x_col="patch_name2",
-                    y_col="grade_2",
-                    batch_size=pipeline["batch_size"],
-                    seed=42,
-                    shuffle=False,
-                    class_mode="categorical",
-                    target_size=(pipeline['img_height'], pipeline['img_width']))
-
     if etapa == 'train' or etapa == 'train_EL':
-        finetune_model = transfer_learning_soft(
-                                                base_model,
-                                                pipeline["class_num"],
-                                                pipeline["stage_config"][iteracion])
-
-    #entrenar modelo
-    from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+        if pipeline["transfer_learning"] == "soft":
+            finetune_model = transfer_learning_soft(base_model,
+                                                    pipeline["class_num"],
+                                                    pipeline["stage_config"][iteracion])
+        if pipeline["transfer_learning"] == "classic":
+            finetune_model = transfer_learning_classic(base_model,
+                                                    pipeline["class_num"])
 
     if etapa == 'train':
         NUM_EPOCHS = train_epochs
         num_train_images = len(datos['df_train'])*pipeline["augmenting_factor"]
-        datos_entrenamiento = datos['df_train'].copy()
+        #datos_entrenamiento = datos['df_train'].copy()
     if etapa == 'train_EL':
         NUM_EPOCHS = batch_epochs
         num_train_images = len(datos['df_train_EL'])*pipeline["augmenting_factor"]
-        datos_entrenamiento = datos['df_train_EL'].copy()
+        #datos_entrenamiento = datos['df_train_EL'].copy()
 
     STEP_SIZE_TRAIN=num_train_images//train_generator.batch_size
-    if len(datos['df_val'])>0:
-        STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
-    STEP_SIZE_TEST1=test1_generator.n//test1_generator.batch_size
+    STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
+    STEP_SIZE_TEST=test_generator.n//test_generator.batch_size
 
-    if dataset == 'gleasson':
-        STEP_SIZE_TEST2=test2_generator.n//test2_generator.batch_size
-
-    if len(datos['df_val'])>0:
-        generator_seguimiento = valid_generator
-        pasos_seguimiento = STEP_SIZE_VALID
-    else:
-        generator_seguimiento = test1_generator
-        pasos_seguimiento = STEP_SIZE_TEST1
-
-    if pipeline["class_num"]>3:
-        metrics = ['accuracy']
-        loss='categorical_crossentropy'
-        peso_clases = {}
-        total = datos_entrenamiento.shape[0]
-        weights = (total/datos_entrenamiento.groupby(y_col_name).count().values)/4
-        peso_clases = {0:weights[0][0], 1:weights[1][0], 2:weights[2][0], 3:weights[3][0]}
-
-        #print(datos_entrenamiento.groupby(y_col_name))
-        print(datos_entrenamiento.groupby(y_col_name).count())
-        print(datos_entrenamiento.groupby(y_col_name).count().values)
-        max_class_num = np.argmax(datos_entrenamiento.groupby(y_col_name).count().values)
-        print('id_maximo',max_class_num)
-
-        peso_clases = {}
-        class_num = datos_entrenamiento.groupby(y_col_name).count().values
-        print('num_maximo',class_num[max_class_num])
-        weights = class_num[max_class_num] / datos_entrenamiento.groupby(y_col_name).count().values
-        print(weights)
-        peso_clases = {0:weights[0][0], 1:weights[1][0], 2:weights[2][0], 3:weights[3][0]}
-        print(peso_clases)
-
-    if pipeline["class_num"]==3:
-        metrics = ['accuracy']
-        # calcular pesos de cada clase
-        total = datos_entrenamiento.shape[0]
-        weights = (total/datos_entrenamiento.groupby(y_col_name).count().values)/3
-        peso_clases = {0:weights[0][0], 1:weights[1][0], 2:weights[2][0]}
-    elif pipeline["class_num"]==2:
-        metrics = ['accuracy']
-        # calcular pesos de cada clase
-        total = datos_entrenamiento.shape[0]
-        weights = (total/datos_entrenamiento.groupby(y_col_name).count().values)/2
-        peso_clases = {0:weights[0][0], 1:weights[1][0]}
-        loss='binary_crossentropy'
-
+    metrics = ['accuracy']
+    loss='categorical_crossentropy'
     adam = Adam(lr=pipeline["stage_config"][iteracion]['LR'])
+
     finetune_model.compile(adam, loss=loss, metrics=metrics)
-    early = EarlyStopping(
-                            monitor='val_loss',
-                            min_delta=1e-3,
-                            patience=5,
-                            verbose=1,
-                            restore_best_weights=True)
 
-    if len(peso_clases)>0:
-        print("\n")
-        print("ESTOY USANDO PESADO DE CLASES!")
-        print(peso_clases)
-        print("##############################")
-        print("\n")
-        history = finetune_model.fit(
-                    train_generator,
-                    epochs=NUM_EPOCHS, workers=1,
-                    steps_per_epoch=STEP_SIZE_TRAIN,
-                    validation_data=generator_seguimiento,
-                    validation_steps=pasos_seguimiento,
-                    callbacks=[early],
-                    verbose=1,
-                    class_weight=peso_clases)
-    else:
-        history = finetune_model.fit(
-                    train_generator,
-                    epochs=NUM_EPOCHS, workers=1,
-                    steps_per_epoch=STEP_SIZE_TRAIN,
-                    validation_data=generator_seguimiento,
-                    validation_steps=pasos_seguimiento,
-                    verbose=1,
-                    callbacks=[early])
+    early = EarlyStopping(monitor='val_loss',
+                        min_delta=1e-3,
+                        patience=5,
+                        verbose=1,
+                        restore_best_weights=True)
 
-    if len(datos['df_val']) > 0:
-        score1=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
+    history = finetune_model.fit(train_generator,
+                epochs=NUM_EPOCHS,
+                workers=1,
+                steps_per_epoch=STEP_SIZE_TRAIN,
+                validation_data=valid_generator,
+                validation_steps=STEP_SIZE_VALID,
+                verbose=1,
+                callbacks=[early])
 
-    score2=finetune_model.evaluate(test1_generator,verbose=0,steps=STEP_SIZE_TEST1)
+    val_score=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
+    test_score=finetune_model.evaluate(test_generator,verbose=0,steps=STEP_SIZE_TEST)
 
-    if dataset == 'gleasson':
-        score3=finetune_model.evaluate_generator(generator=test2_generator,
-        verbose=1,
-        steps=STEP_SIZE_TEST2)
-
-    if len(datos['df_val']) > 0:
-        print("Val  Loss      : ", score1[0])
-        print("Val  Accuracy  : ", score1[1])
-        print("\n")
-    print("Test1 Loss     : ", score2[0])
-    print("Test1 Accuracy : ", score2[1])
-    print("\n")
-    if dataset == 'gleasson':
-        print("Test2 Loss     : ", score3[0])
-        print("Test2 Accuracy : ", score3[1])
-        logs.append([
-            kfold,iteracion,arquitectura,
-            score1[0],score1[1],
-            score2[0],score2[1],
-            score3[0],score3[1]])
-
-    #guardar_logs(ruta,[logs[-1]])
-    save_logs(logs,'train',pipeline)
-
-    # Plot training & validation accuracy values
-    #print(history.history)
-    #print('--- Val acc ---')
-    #print(history.history['val_acc'])
-    plt.plot(history.history['acc'])
-    if len(datos['df_val'])>0:
-        plt.plot(history.history['val_acc'])
-    plt.title('Model accuracy - {}'.format(arquitectura))
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
-    plt.show()
-
-    # Plot training & validation loss values
-    plt.plot(history.history['loss'])
-    if len(datos['df_val'])>0:
-        plt.plot(history.history['val_loss'])
-    plt.title('Model loss - {}'.format(arquitectura))
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
-    plt.show()
+    print("Val  Loss      : ", val_score[0])
+    print("Test Loss     : ", test_score[0])
+    print("Val  Accuracy  : ", val_score[1])
+    print("Test Accuracy : ", test_score[1])
 
     end_model = time.time()
     time_training = end_model - start_model
-    print(f"training {arquitectura}",time_training)
+    print(f"training {architecture}",time_training)
+
+    logs = []
+    logs.append([kfold,iteracion,architecture,val_score[0],val_score[1],
+            test_score[0],test_score[1]])
+
+    logs_time = []
+    logs_time.append([kfold,iteracion,architecture,time_training])
+
+    save_logs(logs,'train',pipeline)
+    save_logs(logs_time,'time',pipeline)
+    save_plots(history, architecture, pipeline)
+
+    model_performance['val_acc'] = val_score[1]
+    model_performance['test_acc'] = test_score[1]
 
     if pipeline['save_model']:
         save_path_model = os.path.join(
             pipeline['save_path_model'],
-            f'{kfold}_{iteracion}_{arquitectura}.h5')
+            f'{kfold}_{iteracion}_{architecture}.h5')
         finetune_model.save(save_path_model)
-        model_performance['val_acc'] = score1[1]
+        model_performance['val_acc'] = val_score[1]
         return save_path_model , model_performance
 
-    logs_time.append([kfold,iteracion,arquitectura,time_training])
-    save_logs(logs_time,'time',pipeline)
-
-    #pipeline['logs_model']
-    #time_training
-    model_performance['val_acc'] = score1[1]
-    model_performance['test1_acc'] = score2[1]
-    model_performance['test2_acc'] = score3[1]
     return finetune_model , model_performance
 
 def get_model(architecture, iteracion, models_info, pipeline):
