@@ -1,8 +1,1 @@
-SSGF-for-HRRS-scene-classification/
-datasets/
-libsvm/
-.ipynb_checkpoints/
-data/paper_arabe/*.tif
-data/paper_chino/*.tif
-results/jeddah/
-logs/
+ssl_satellital/notebooks/.ipynb_checkpoints
