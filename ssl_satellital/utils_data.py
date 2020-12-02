@@ -3,7 +3,7 @@
 import os
 import pandas as pd
 
-from sklearn.model_selection import StratifiedKFold
+#from sklearn.model_selection import StratifiedKFold
 
 def get_dataset(pipeline):
     """

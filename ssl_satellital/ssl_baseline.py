@@ -42,7 +42,7 @@ tensorflow.config.experimental.set_memory_growth(gpus[0], True)
 #from tensorflow.keras.preprocessing import image
 
 ## Preparar dataset
-def ssl_global(archivos, model_zoo, pipeline):
+def ssl_global(model_zoo=model_zoo, pipeline=pipeline):
 
     datos = {}
     models_info = {}
@@ -205,15 +205,15 @@ def ssl_global(archivos, model_zoo, pipeline):
 pipeline = {}
 
 server = 'bivl2ab'
-dataset = 'gleasson'
-dataset_base = 'hardvard'
+dataset = 'satellital'
+dataset_base = ''
 metodo = 'semi-supervisado'
 
-csvs = '/home/miguel/gleasson/dataset/tma_info/'
-archivos = '/home/miguel/gleasson/'
-ruta = '/home/miguel/gleasson/'
+csvs = f'/home/miguel/{dataset}/dataset/tma_info/'
+archivos = f'/home/miguel/{dataset}/'
+ruta = f'/home/miguel/{dataset}/'
 
-pipeline['save_path_model'] = '/home/miguel/gleasson/models/v3/'
+pipeline['save_path_model'] = '/home/miguel/satellital/models/v7/'
 
 x_col_name = 'patch_name'
 y_col_name = 'grade_'
@@ -293,16 +293,14 @@ if modalidad == 'lento':
     train_epochs = 30
     batch_epochs = 30
 
-if dataset == 'gleasson':
-    logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
-    "test1_loss","test1_accu","test2_loss","test2_accu"])
-    logs_time.append(["kfold","iteracion","arquitectura","training_time"])
-    logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
+logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
+"test_loss","test_accu"])
+logs_time.append(["kfold","iteracion","arquitectura","training_time"])
+logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
 
 save_logs(logs,'train',pipeline)
 save_logs(logs_time,'time',pipeline)
 save_logs(logs_label,'label',pipeline)
 
 model_zoo = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
-ssl_global( archivos, model_zoo , csvs, pipeline )
-
+ssl_global(model_zoo , pipeline)
