@@ -2,8 +2,8 @@
 
 import os
 import pandas as pd
-
-#from sklearn.model_selection import StratifiedKFold
+#from utils_preprocess import dividir_balanceado2
+from sklearn.model_selection import StratifiedKFold
 
 def get_dataset(pipeline):
     """
@@ -25,7 +25,8 @@ def get_dataset(pipeline):
         L = '/{}/{}/'.format(pipeline["ruta_base"],dataset_base)
 
     if dataset_base == 'NWPU-RESISC45':
-        L = '/{}/{}/'.format(pipeline["ruta_base"],dataset_base)
+        #L = '/{}/{}/'.format(pipeline["ruta_base"],dataset_base)
+        L = os.path.join(pipeline["ruta_base"],dataset_base)
 
     imagenes, clases = [],[]
 
@@ -38,15 +39,6 @@ def get_dataset(pipeline):
     df=pd.DataFrame([imagenes,clases]).T
     df.columns = pipeline["x_col_name"] , pipeline["y_col_name"]
     return df
-
-def process_dataset(pipeline):
-    df = get_dataset(pipeline)
-    # SPLIT ON SET #ACA VOY
-    df_train = pd.DataFrame()
-    df_val = pd.DataFrame()
-    df_test = pd.DataFrame()
-    print(df)
-    return df_train, df_val, df_test
 
 def validar_existencia(df, pipeline):
     imgs = df[pipeline["x_col_name"]].values.tolist()
@@ -64,3 +56,95 @@ def validar_existencia(df, pipeline):
 def dividir_lotes(lista, divisiones):
     k, m = divmod(len(lista), divisiones)
     return (lista[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(divisiones))
+
+def balancear_downsampling(df, pipeline):
+    df.columns = pipeline["x_col_name"], pipeline["y_col_name"]
+    g = df.groupby(pipeline["y_col_name"])
+    df_temp=g.apply(lambda x: x.sample(g.size().min()).reset_index(drop=True))
+    df_temp.columns = pipeline["y_col_name"]
+    df_temp = df_temp.reset_index().drop([pipeline["y_col_name"],'level_1'],axis=1)
+    df_temp.columns=[pipeline["x_col_name"], pipeline["y_col_name"]]
+    return df_temp
+
+def dividir_balanceado2(df,fragmentos):
+    X = df.iloc[:,0].values
+    y = df.iloc[:,1].values
+    kf = StratifiedKFold(n_splits=fragmentos)
+    kf.get_n_splits(X)
+
+    fold = []
+
+    print(kf)
+
+    for train_index, test_index in kf.split(X, y):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        fold.append([X_train,X_test,y_train,y_test])
+    return fold
+
+def get_Fold(kfold, datos, pipeline):
+
+    fold = datos["kfold_total"]
+
+    df_train = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
+    df_train.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+
+    df_val = pd.DataFrame([fold[kfold][1],fold[kfold][3]]).T
+    df_val.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+
+    df_test = datos["df_test"]
+
+    # Segmentación del 60% de train en 10% train y 50% Unlabeled
+    sub_fold = dividir_balanceado2(df_train,6)
+    df_train = pd.DataFrame([sub_fold[0][1],sub_fold[0][3]]).T
+    df_train.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+
+    df_U = pd.DataFrame([sub_fold[0][0],sub_fold[0][2]]).T
+    df_U.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+    EL,LC = [],[]
+
+    # saving csv data
+    save_csv_train = os.path.join(pipeline["ruta_base"],f'exp_{pipeline["id"]}_kfold_{kfold}_train.csv')
+    save_csv_val = os.path.join(pipeline["ruta_base"],f'exp_{pipeline["id"]}_kfold_{kfold}_val.csv')
+    save_csv_test = os.path.join(pipeline["ruta_base"],f'exp_{pipeline["id"]}_kfold_{kfold}_test.csv')
+
+    df_train.to_csv(save_csv_train,index=False)
+    df_val.to_csv(save_csv_val,index=False)
+    df_test.to_csv(save_csv_test,index=False)
+
+    print("  train :", len(df_train))
+    print("    val :", len(df_val))
+    print("   test :", len(df_test))
+    print("      u :", len(df_U))
+
+    # Segmentación de U en lotes para etiquetar
+    batch_set = list(dividir_lotes(df_U, pipeline["batch_size_u"]))
+    for i in range(len(batch_set)):
+        print("batch_u :", len( batch_set[i] ) )
+
+    datos["df_train"] = df_train
+    datos["df_val"] = df_val
+    datos["batch_set"] = batch_set
+    datos["EL"] = EL
+    datos["LC"] = LC
+
+    return datos
+
+def split_train_test(datos, pipeline):
+
+    # Segmentacion 80% train y 20% test
+    fold_base = dividir_balanceado2(datos["df_base"], pipeline["split_train_test"])
+
+    df_train_base = pd.DataFrame([fold_base[0][0],fold_base[0][2]]).T
+    df_train_base.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+
+    df_test = pd.DataFrame([fold_base[0][1],fold_base[0][3]]).T
+    df_test.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+
+    # Segmentacion del 80% de train en K-folds=4
+    fold_total = dividir_balanceado2(df_train_base, pipeline["split_kfold"])
+
+    datos["df_test"] = df_test
+    datos["kfold_total"] = fold_total
+
+    return datos

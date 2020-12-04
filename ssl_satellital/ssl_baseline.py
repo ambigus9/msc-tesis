@@ -3,25 +3,27 @@
 #import gc
 import os
 #import csv
-import time
+#import time
 import random
-import tensorflow
+#import tensorflow # UNCOMMENT
 import pandas as pd
 import numpy as np
 #import matplotlib.pyplot as plt
 #from sklearn.model_selection import StratifiedKFold
 
-from utils_data import process_dataset
-#from utils_data import get_dataset
+from utils_data import get_dataset
 from utils_data import dividir_lotes
-from utils_preprocess import dividir_balanceado2
-from utils_general import save_logs
+from utils_data import split_train_test
+from utils_data import get_Fold
+
+#from utils_preprocess import dividir_balanceado2
+#from utils_general import save_logs # UNCOMMENT
 
 #from ssl_train import get_model
-from ssl_train import training
-from ssl_eval import evaluate_cotrain
-from ssl_label import labeling
-from ssl_stats import label_stats
+#from ssl_train import training # UNCOMMENT
+#from ssl_eval import evaluate_cotrain # UNCOMMENT
+#from ssl_label import labeling # UNCOMMENT
+#from ssl_stats import label_stats # UNCOMMENT
 
 SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -31,10 +33,10 @@ os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
 random.seed(SEED)
 np.random.seed(SEED)
-tensorflow.random.set_random_seed(SEED)
+#tensorflow.random.set_random_seed(SEED) # UNCOMMENT
 
-gpus = tensorflow.config.experimental.list_physical_devices('GPU')
-tensorflow.config.experimental.set_memory_growth(gpus[0], True)
+#gpus = tensorflow.config.experimental.list_physical_devices('GPU') # UNCOMMENT
+#tensorflow.config.experimental.set_memory_growth(gpus[0], True) # UNCOMMENT
 
 #df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs)
 
@@ -42,65 +44,34 @@ tensorflow.config.experimental.set_memory_growth(gpus[0], True)
 #from tensorflow.keras.preprocessing import image
 
 ## Preparar dataset
-def ssl_global(model_zoo=model_zoo, pipeline=pipeline):
+def ssl_global(model_zoo, pipeline):
 
     datos = {}
     models_info = {}
-    df_train, df_val, df_test = process_dataset(pipeline)
+
+    datos["df_base"] = get_dataset(pipeline)
+    datos = split_train_test(datos, pipeline)
+    #datos = get_Fold(kfold, datos, pipeline)
 
     # Medir tiempo de ejecucion
-    #import time
+    import time
     start = time.time()
-    fold = dividir_balanceado2(df_train,4)
 
     for kfold in range(1):
-
-        if dataset == 'gleasson':
-            #import pandas as pd
-            df_train_58         = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
-            df_train_58.columns = [x_col_name,y_col_name]
-
-            df_val           = pd.DataFrame([fold[kfold][1],fold[kfold][3]]).T
-            df_val.columns   = [x_col_name,y_col_name]
-
-            fold1            = dividir_balanceado2(df_train_58,4)
-            df_train         = pd.DataFrame([fold1[0][1],fold1[0][3]]).T
-            df_train.columns = [x_col_name,y_col_name]
-
-            df_train.to_csv('data/train.csv',index=False)
-            df_val.to_csv('data/val.csv',index=False)
-            df_test.to_csv('data/test.csv',index=False)
-
-            df_U         = pd.DataFrame([fold1[0][0],fold1[0][2]]).T
-            df_U.columns = [x_col_name,y_col_name]
-            EL,LC        = [],[]
-            #datos["EL"] = []
-            #datos["LC"] = []
-
-            print("train :",len(df_train))
-            print("val   :",len(df_val))
-            print("u     :",len(df_U))
-
-            # Segmentación de U en lotes para etiquetar
-            batch_set=list(dividir_lotes(df_U, numero_lotes))
-            #for i in range(len(batch_set)):
-            for i in enumerate(batch_set):
-                print(len(batch_set[i].iloc[:,0].values.tolist()))
-
-        datos['df_train'] = df_train
-        datos['df_val'] = df_val
-        datos['df_test'] = df_test
-
         for iteracion in range(numero_lotes*1):
 
-            #import random
-            random.seed(SEED)
-            np.random.seed(SEED)
-            tensorflow.random.set_random_seed(SEED)
+            #random.seed(SEED)
+            #np.random.seed(SEED)
+            #tensorflow.random.set_random_seed(SEED)
 
             print("\n######################")
             print("K-FOLD {} - ITERACION {}".format(kfold,iteracion))
             print("######################\n")
+
+            datos = get_Fold(kfold, datos, pipeline)
+            
+            print("DATOS")
+            print(datos)
 
             if iteracion == 0:
                 etapa = 'train'
@@ -202,7 +173,17 @@ def ssl_global(model_zoo=model_zoo, pipeline=pipeline):
     end = time.time()
     print(end - start)
 
-pipeline = {}
+#pipeline = {}
+
+def read_yaml(yml_path):
+    import yaml
+    with open(yml_path) as f:
+        # use safe_load instead load
+        dataMap = yaml.safe_load(f)
+    return dataMap
+
+pipeline = read_yaml('ssl_baseline.yml')
+print(pipeline)
 
 server = 'bivl2ab'
 dataset = 'satellital'
@@ -223,20 +204,7 @@ ruta_base = 'home/miguel/satellital'
 dataset_base = 'NWPU-RESISC45'
 
 if dataset == 'satellital':
-    pipeline['dataset_base'] = 'NWPU-RESISC45'
-
-
-    pipeline['weights'] = 'imagenet'
-    pipeline['img_height'] = 299
-    pipeline['img_width'] = 299
-    pipeline["augmenting_factor"] = 1.5
-    pipeline["class_num"] = 2
-    pipeline["batch_size"] = 16
-    pipeline['save_model'] = False
-    pipeline['save_path_logs'] = 'logs/'
-    pipeline['id'] = 32
-    pipeline["path_label_stats"] = "results/data_label_stats_"
-    pipeline["ssl_threshold"] = 0.90
+    #pipeline['dataset_base'] = 'NWPU-RESISC45'
     pipeline['stage_config'] = {
         0: {
             'LR': 1e-5,
@@ -298,9 +266,9 @@ logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
 logs_time.append(["kfold","iteracion","arquitectura","training_time"])
 logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
 
-save_logs(logs,'train',pipeline)
-save_logs(logs_time,'time',pipeline)
-save_logs(logs_label,'label',pipeline)
+#save_logs(logs,'train',pipeline) # UNCOMMENT
+#save_logs(logs_time,'time',pipeline) # UNCOMMENT
+#save_logs(logs_label,'label',pipeline) # UNCOMMENT
 
-model_zoo = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
-ssl_global(model_zoo , pipeline)
+models = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
+ssl_global(model_zoo=models, pipeline=pipeline)
