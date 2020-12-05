@@ -15,18 +15,10 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     predicciones = []
     for i in range(len(df1)):
 
-        #c1 = (df1['Predictions'][i] == df2['Predictions'][i]) and  (df1['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df2['Max_Probability'][i] > pipeline["ssl_threshold"])
-        #c2 = (df1['Predictions'][i] == df3['Predictions'][i]) and  (df1['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df3['Max_Probability'][i] > pipeline["ssl_threshold"])
-        #c3 = (df2['Predictions'][i] == df3['Predictions'][i]) and  (df2['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df3['Max_Probability'][i] > pipeline["ssl_threshold"])
-
         c1 = (df1['Predictions'][i] == df2['Predictions'][i])
         c2 = (df1['Predictions'][i] == df3['Predictions'][i])
         c3 = (df2['Predictions'][i] == df3['Predictions'][i])
 
-        #if c1 or c2:
-        #    predicciones.append([df1['Filename'][i],df1['Predictions'][i]])
-        #elif c3:
-        #    predicciones.append([df2['Filename'][i],df2['Predictions'][i]])
         if c1 and c2 and c3:
             predicciones.append([df1['Filename'][i],df1['Predictions'][i]])
         else:
@@ -47,11 +39,7 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
 
     from sklearn.metrics import accuracy_score
     co_train_accu = accuracy_score(y_pred,y_true)
-
-    if dataset_base == 'gleasson-patologo1':
-        co_train_label = 'co-train1'
-    if dataset_base == 'gleasson-patologo2':
-        co_train_label = 'co-train2'
+    co_train_label = 'co-train'
 
     logs.append([kfold,iteracion,co_train_label,None,None,None,co_train_accu])
     save_logs(logs,'train',pipeline)

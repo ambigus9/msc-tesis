@@ -13,8 +13,7 @@ from utils_general import save_logs
 from ml_strategy import transfer_learning_classic
 from ml_strategy import transfer_learning_soft
 
-def training(kfold, etapa, datos, architecture, train_epochs,
-                    batch_epochs, iteracion, models_info, pipeline):
+def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline):
 
     start_model = time.time()
     base_model, preprocess_input = get_model(architecture, iteracion, models_info, pipeline)
@@ -71,7 +70,7 @@ def training(kfold, etapa, datos, architecture, train_epochs,
     test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
 
     test_generator=test_datagen.flow_from_dataframe(
-                      dataframe=datos['df_test1'],
+                      dataframe=datos['df_test'],
                       x_col=pipeline["x_col_name"],
                       y_col=pipeline["y_col_name"],
                       batch_size=pipeline["batch_size"],
@@ -90,12 +89,12 @@ def training(kfold, etapa, datos, architecture, train_epochs,
                                                     pipeline["class_num"])
 
     if etapa == 'train':
-        NUM_EPOCHS = train_epochs
-        num_train_images = len(datos['df_train'])*pipeline["augmenting_factor"]
+        NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]
+        num_train_images = len(datos['df_train'])*pipeline["aug_factor"]
         #datos_entrenamiento = datos['df_train'].copy()
     if etapa == 'train_EL':
-        NUM_EPOCHS = batch_epochs
-        num_train_images = len(datos['df_train_EL'])*pipeline["augmenting_factor"]
+        NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["batch_epochs"]
+        num_train_images = len(datos['df_train_EL'])*pipeline["aug_factor"]
         #datos_entrenamiento = datos['df_train_EL'].copy()
 
     STEP_SIZE_TRAIN=num_train_images//train_generator.batch_size
@@ -144,7 +143,7 @@ def training(kfold, etapa, datos, architecture, train_epochs,
 
     save_logs(logs,'train',pipeline)
     save_logs(logs_time,'time',pipeline)
-    save_plots(history, architecture, pipeline)
+    save_plots(history, kfold, iteracion, architecture, pipeline)
 
     model_performance['val_acc'] = val_score[1]
     model_performance['test_acc'] = test_score[1]
