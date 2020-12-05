@@ -12,10 +12,10 @@ def read_yaml(yml_path):
     return dataMap
 
 def save_plots(history, kfold, iteracion, architecture, pipeline):
-    # Plot training & validation accuracy values
     os.makedirs(pipeline["save_fig_path"], exist_ok=True)
     ID = pipeline['id']
 
+    # Plot training & validation accuracy values
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
     plt.title('Model accuracy - {}'.format(architecture))
@@ -26,6 +26,7 @@ def save_plots(history, kfold, iteracion, architecture, pipeline):
     save_fig_name = f"exp_{ID:02d}_accu_{kfold:02d}_{iteracion:02d}_{architecture}.png"
     save_fig_accu = os.path.join(pipeline["save_fig_path"] , save_fig_name)
     plt.savefig(save_fig_accu)
+    plt.clf()
 
     # Plot training & validation loss values
     plt.plot(history.history['loss'])
@@ -37,7 +38,8 @@ def save_plots(history, kfold, iteracion, architecture, pipeline):
     save_fig_name = f"exp_{ID:02d}_loss_{kfold:02d}_{iteracion:02d}_{architecture}.png"
     save_fig_loss = os.path.join(pipeline["save_fig_path"] , save_fig_name)
     plt.savefig(save_fig_loss)
-
+    plt.clf()
+    
 def save_logs(logs, log_type, pipeline):
     ID = pipeline['id']
     save_path = pipeline['save_path_logs']

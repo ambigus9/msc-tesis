@@ -31,3 +31,5 @@ kfold,iteracion,arquitectura,training_time
 0,0,Xception,172.72563648223877
 0,0,DenseNet169,250.64894652366638
 kfold,iteracion,arquitectura,training_time
+0,0,ResNet50,541.7815175056458
+0,0,Xception,599.9687788486481
