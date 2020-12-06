@@ -99,7 +99,7 @@ def ssl_global(model_zoo, pipeline):
             mod_top2, arch_top2 = models_info[ top_models[1] ]['model_memory'] , top_models[1]
             mod_top3, arch_top3 = models_info[ top_models[2] ]['model_memory'] , top_models[2]
 
-            print("\nCo-train:\n", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,'gleasson-patologo1',datos,etapa,kfold,iteracion,pipeline,models_info))
+            print("\nCo-train:\n", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,datos,etapa,kfold,iteracion,pipeline,models_info))
 
             if semi_method == 'supervised':
                 break

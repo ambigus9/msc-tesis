@@ -33,3 +33,13 @@ kfold,iteracion,arquitectura,training_time
 kfold,iteracion,arquitectura,training_time
 0,0,ResNet50,541.7815175056458
 0,0,Xception,599.9687788486481
+0,0,DenseNet169,717.3473510742188
+0,0,InceptionV4,934.6082329750061
+0,0,DenseNet121,693.1056880950928
+kfold,iteracion,arquitectura,training_time
+kfold,iteracion,arquitectura,training_time
+0,0,ResNet50,159.82368636131287
+0,0,Xception,172.86988973617554
+0,0,DenseNet169,249.74939942359924
+0,0,InceptionV4,328.0371172428131
+0,0,DenseNet121,246.25044679641724
