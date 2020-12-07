@@ -1,4 +1,9 @@
-def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iteracion, models_info):
+"SSL generators"
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from ssl_train import get_model
+
+def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, models_info):
 
     _ , preprocess_input = get_model(architecture, iteracion, models_info, pipeline)
 
@@ -18,8 +23,8 @@ def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iter
     if etapa=='train':
         train_generator = datagen.flow_from_dataframe(
                          dataframe=datos['df_train'],
-                         x_col=x_col_name,
-                         y_col=y_col_name,
+                         x_col=pipeline["x_col_name"],
+                         y_col=pipeline["y_col_name"],
                          target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical',
                          batch_size=pipeline["batch_size"],
@@ -29,15 +34,15 @@ def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iter
     if etapa=='train_EL':
         train_generator = datagen.flow_from_dataframe(
                          dataframe=datos['df_train_EL'],
-                         x_col=x_col_name,
-                         y_col=y_col_name,
+                         x_col=pipeline["x_col_name"],
+                         y_col=pipeline["y_col_name"],
                          target_size=(pipeline['img_height'],pipeline['img_width']),
                          class_mode='categorical',
                          batch_size=pipeline["batch_size"],
                          seed=42,
                          shuffle=True)
 
-    test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
+    test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 
     test_generator=test_datagen.flow_from_dataframe(
                     dataframe=datos['df_test'],
@@ -52,12 +57,12 @@ def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iter
     STEP_SIZE_TEST=test_generator.n//test_generator.batch_size
 
     if label_active:
-        batchset_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
+        batchset_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 
         batchset_generator=batchset_datagen.flow_from_dataframe(
                       dataframe=datos['df_batchset'],
-                      x_col=x_col_name,
-                      y_col=y_col_name,
+                      x_col=pipeline["x_col_name"],
+                      y_col=pipeline["y_col_name"],
                       batch_size=pipeline["batch_size"],
                       seed=42,
                       shuffle=False,
@@ -66,13 +71,6 @@ def generadores(etapa,architecture,datos,pipeline,label_active,dataset_base,iter
 
         STEP_SIZE_BATCH=batchset_generator.n//batchset_generator.batch_size
 
-        return train_generator,batchset_generator,STEP_SIZE_BATCH
+        return train_generator, batchset_generator, STEP_SIZE_BATCH
 
-    #if dataset_base == 'gleasson-patologo2':
-        #STEP_SIZE_TEST2=test2_generator.n//test2_generator.batch_size
-        #return train_generator,test2_generator,STEP_SIZE_TEST2
-
-    #if dataset_base == 'gleasson-patologo1':
-        #return train_generator,test1_generator,STEP_SIZE_TEST1
-    return train_generator,test_generator,STEP_SIZE_TEST
-
+    return train_generator, test_generator, STEP_SIZE_TEST

@@ -5,11 +5,10 @@ import os
 #import csv
 #import time
 import random
-import tensorflow # UNCOMMENT
+import tensorflow
 import pandas as pd
 import numpy as np
 #import matplotlib.pyplot as plt
-#from sklearn.model_selection import StratifiedKFold
 
 from utils_data import get_dataset
 from utils_data import dividir_lotes
@@ -17,14 +16,13 @@ from utils_data import split_train_test
 from utils_data import get_Fold
 
 #from utils_preprocess import dividir_balanceado2
-from utils_general import save_logs # UNCOMMENT
+from utils_general import save_logs
 from utils_general import read_yaml
 
-#from ssl_train import get_model
-from ssl_train import training # UNCOMMENT
-from ssl_eval import evaluate_cotrain # UNCOMMENT
-from ssl_label import labeling # UNCOMMENT
-from ssl_stats import label_stats # UNCOMMENT
+from ssl_train import training
+from ssl_eval import evaluate_cotrain
+from ssl_label import labeling
+from ssl_stats import label_stats
 
 SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -34,10 +32,10 @@ os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
 random.seed(SEED)
 np.random.seed(SEED)
-tensorflow.random.set_random_seed(SEED) # UNCOMMENT
+tensorflow.random.set_random_seed(SEED)
 
-gpus = tensorflow.config.experimental.list_physical_devices('GPU') # UNCOMMENT
-tensorflow.config.experimental.set_memory_growth(gpus[0], True) # UNCOMMENT
+gpus = tensorflow.config.experimental.list_physical_devices('GPU')
+tensorflow.config.experimental.set_memory_growth(gpus[0], True)
 
 #df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs)
 
@@ -108,8 +106,8 @@ def ssl_global(model_zoo, pipeline):
 
                 #df_batchset = batch_set[iteracion]
                 df_batchset = datos["batch_set"][iteracion]
-                df_batchset.columns = [x_col_name,y_col_name]
-                df_batchset[y_col_name] = '0'
+                df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+                df_batchset[pipeline["y_col_name"]] = '0'
             else:
                 if  iteracion == numero_lotes:
                     df_LC = pd.DataFrame(LC)
@@ -120,8 +118,8 @@ def ssl_global(model_zoo, pipeline):
                     LC = []
 
                 df_batchset = pd.DataFrame([batch_set_LC[int(iteracion-numero_lotes)].iloc[:,0].values.tolist()]).T
-                df_batchset.columns = [x_col_name]
-                df_batchset[y_col_name] = '0'
+                df_batchset.columns = [pipeline["x_col_name"]]
+                df_batchset[pipeline["y_col_name"]] = '0'
 
             datos['df_batchset'] = df_batchset
 
@@ -129,11 +127,11 @@ def ssl_global(model_zoo, pipeline):
             #logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter)])
             #save_logs(logs_label,'label',pipeline)
 
-            #df_EL = pd.DataFrame(EL, columns=[x_col_name, y_col_name, 'arch_scores'])
-            #df_LC = pd.DataFrame(LC, columns=[x_col_name, y_col_name, 'arch_scores'])
+            #df_EL = pd.DataFrame(EL, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores'])
+            #df_LC = pd.DataFrame(LC, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores'])
 
-            df_EL = pd.DataFrame(EL_iter, columns=[x_col_name, y_col_name, 'arch_scores']) # EXP30
-            df_LC = pd.DataFrame(LC_iter, columns=[x_col_name, y_col_name, 'arch_scores']) # EXP30
+            df_EL = pd.DataFrame(EL_iter, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores']) # EXP30
+            df_LC = pd.DataFrame(LC_iter, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores']) # EXP30
 
             df_label_stats = label_stats(df_EL, df_LC)
             print(df_label_stats)
@@ -189,8 +187,8 @@ print(pipeline)
 
 pipeline['save_path_model'] = '/home/miguel/satellital/models/v7/'
 
-#x_col_name = 'patch_name'
-#y_col_name = 'grade_'
+#pipeline["x_col_name"] = 'patch_name'
+#pipeline["y_col_name"] = 'grade_'
 
 #dataset = 'satellital'
 #ruta_base = 'home/miguel/satellital'
@@ -260,9 +258,9 @@ logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
 logs_time.append(["kfold","iteracion","arquitectura","training_time"])
 logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
 
-save_logs(logs,'train',pipeline) # UNCOMMENT
-save_logs(logs_time,'time',pipeline) # UNCOMMENT
-save_logs(logs_label,'label',pipeline) # UNCOMMENT
+save_logs(logs,'train',pipeline)
+save_logs(logs_time,'time',pipeline)
+save_logs(logs_label,'label',pipeline)
 
 models = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
 ssl_global(model_zoo=models, pipeline=pipeline)

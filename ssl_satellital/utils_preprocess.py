@@ -1,11 +1,15 @@
-def balancear_downsampling(df):
-    df.columns=["archivo","clase"]
+"SSL Preprocess"
+
+from sklearn.model_selection import StratifiedKFold
+
+def balancear_downsampling(df, pipeline):
+    df.columns=[pipeline["x_col_name"], pipeline["y_col_name"]]
     g = df.groupby('clase')
-    df_=g.apply(lambda x: x.sample(g.size().min()).reset_index(drop=True))
-    df_.columns = ['archivos','clases']
-    df_ = df_.reset_index().drop(['clase','level_1'],axis=1)
-    df_.columns=[x_col_name,y_col_name]
-    return df_
+    df_temp=g.apply(lambda x: x.sample(g.size().min()).reset_index(drop=True))
+    df_temp.columns = ['archivos','clases']
+    df_temp = df_temp.reset_index().drop(['clase','level_1'],axis=1)
+    df_temp.columns=[pipeline["x_col_name"], pipeline["y_col_name"]]
+    return df_temp
 
 def dividir_balanceado2(df,fragmentos):
     X = df.iloc[:,0].values
@@ -15,7 +19,7 @@ def dividir_balanceado2(df,fragmentos):
 
     fold = []
 
-    #print(kf)
+    print(kf)
 
     for train_index, test_index in kf.split(X, y):
         X_train, X_test = X[train_index], X[test_index]

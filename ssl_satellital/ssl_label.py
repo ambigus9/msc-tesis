@@ -33,13 +33,13 @@ def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitect
     EL_iter = []
     LC_iter = []
 
-    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa,arquitectura1,datos,pipeline,True,None,iteracion,models_info)
-    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa,arquitectura2,datos,pipeline,True,None,iteracion,models_info)
-    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa,arquitectura3,datos,pipeline,True,None,iteracion,models_info)
+    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa, arquitectura1, datos, pipeline, True, iteracion, models_info)
+    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa, arquitectura2, datos, pipeline, True, iteracion, models_info)
+    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa, arquitectura3, datos, pipeline, True, iteracion, models_info)
 
-    df1=evaluar(modelo1,train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1)
-    df2=evaluar(modelo2,train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2)
-    df3=evaluar(modelo3,train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3)
+    df1 = evaluar(modelo1,train_generator_arch1, batchset_generator_arch1, STEP_SIZE_BATCH_arch1)
+    df2 = evaluar(modelo2,train_generator_arch2, batchset_generator_arch2, STEP_SIZE_BATCH_arch2)
+    df3 = evaluar(modelo3,train_generator_arch3, batchset_generator_arch3, STEP_SIZE_BATCH_arch3)
 
     for i in range(len(df1)):
 

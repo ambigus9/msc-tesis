@@ -1,11 +1,12 @@
 import os
 import gc
 import csv
+import yaml
 from tensorflow.keras.backend import clear_session
 import matplotlib.pyplot as plt
 
 def read_yaml(yml_path):
-    import yaml
+    
     with open(yml_path) as f:
         # use safe_load instead load
         dataMap = yaml.safe_load(f)
