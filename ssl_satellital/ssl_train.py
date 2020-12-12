@@ -79,14 +79,17 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
                       class_mode="categorical",
                       target_size=(pipeline['img_height'],pipeline['img_width']))
 
-    if etapa == 'train' or etapa == 'train_EL':
-        if pipeline["transfer_learning"] == "soft":
-            finetune_model = transfer_learning_soft(base_model,
-                                                    pipeline["class_num"],
-                                                    pipeline["stage_config"][iteracion])
-        if pipeline["transfer_learning"] == "classic":
-            finetune_model = transfer_learning_classic(base_model,
-                                                    pipeline["class_num"])
+    #if etapa == 'train' or etapa == 'train_EL':
+    if etapa == 'train' and pipeline["transfer_learning"] == "classic":
+        finetune_model = transfer_learning_classic(base_model,
+                                                pipeline["class_num"])
+    elif pipeline["transfer_learning"] == "soft":
+        finetune_model = transfer_learning_soft(base_model,
+                                                pipeline["class_num"],
+                                                pipeline["stage_config"][iteracion])
+    else:
+        finetune_model = base_model
+    
 
     if etapa == 'train':
         NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]

@@ -3,7 +3,7 @@
 from ml_generators import generadores
 from ssl_eval import evaluar
 
-def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitectura3,EL,LC,datos,pipeline,iteracion,models_info):
+def labeling(etapa, modelo1, modelo2, modelo3, arquitectura1, arquitectura2, arquitectura3, datos, pipeline, iteracion, models_info):
     """
     Labels samples using models
     Args:
@@ -53,14 +53,14 @@ def labeling(etapa,modelo1,modelo2,modelo3,arquitectura1,arquitectura2,arquitect
         c3 = (df2['Predictions'][i] == df3['Predictions'][i]) and  (df2['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df3['Max_Probability'][i] > pipeline["ssl_threshold"])
 
         if c1 and c2 and c3:
-            EL.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
+            datos["EL"].append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             EL_iter.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             etiquetados_EL += 1
         else:
-            LC.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
+            datos["LC"].append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             LC_iter.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             etiquetados_LC += 1
 
     print('etiquetados EL {} LC {}'.format(etiquetados_EL, etiquetados_LC))
 
-    return EL, LC, EL_iter, LC_iter
+    return datos, EL_iter, LC_iter

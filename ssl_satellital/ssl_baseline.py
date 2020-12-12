@@ -5,6 +5,7 @@ import os
 #import csv
 #import time
 import random
+import traceback
 import tensorflow
 import pandas as pd
 import numpy as np
@@ -24,9 +25,12 @@ from ssl_eval import evaluate_cotrain
 from ssl_label import labeling
 from ssl_stats import label_stats
 
+#loading global configuration
+pipeline = read_yaml('ssl_baseline.yml')
+
 SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="5"
+os.environ["CUDA_VISIBLE_DEVICES"]=str(pipeline["gpu"])
 os.environ['PYTHONHASHSEED']=str(SEED)
 os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
@@ -34,19 +38,23 @@ random.seed(SEED)
 np.random.seed(SEED)
 tensorflow.random.set_random_seed(SEED)
 
-gpus = tensorflow.config.experimental.list_physical_devices('GPU')
-tensorflow.config.experimental.set_memory_growth(gpus[0], True)
+if pipeline["gpu"] >= 0:
+    gpus = tensorflow.config.experimental.list_physical_devices('GPU')
+    tensorflow.config.experimental.set_memory_growth(gpus[0], True)
 
-#df_train, df_val, df_test1, df_test2 = get_data(archivos, csvs)
-
-#from tensorflow.keras.models import load_model
-#from tensorflow.keras.preprocessing import image
+# TO DO -> USE UNIVERSAL DICTS
+logs,logs_time,logs_label = [], [], []
 
 ## Preparar dataset
 def ssl_global(model_zoo, pipeline):
 
+    numero_lotes = 5
+    semi_method = 'co-training-multi'
+
     datos = {}
     models_info = {}
+    #test_cotraining,predicciones = [],[]
+    #logs,logs_time,logs_label = [], [], []
 
     datos["df_base"] = get_dataset(pipeline)
     datos = split_train_test(datos, pipeline)
@@ -96,8 +104,12 @@ def ssl_global(model_zoo, pipeline):
             mod_top1, arch_top1 = models_info[ top_models[0] ]['model_memory'] , top_models[0]
             mod_top2, arch_top2 = models_info[ top_models[1] ]['model_memory'] , top_models[1]
             mod_top3, arch_top3 = models_info[ top_models[2] ]['model_memory'] , top_models[2]
-
-            print("\nCo-train:\n", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,arch_top2,arch_top3,datos,etapa,kfold,iteracion,pipeline,models_info))
+            
+            print("\n")
+            print("Co-train: ", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
+                                                    arch_top2,arch_top3,datos,etapa,kfold,
+                                                    iteracion,pipeline,models_info,logs))
+            print("\n")
 
             if semi_method == 'supervised':
                 break
@@ -110,12 +122,12 @@ def ssl_global(model_zoo, pipeline):
                 df_batchset[pipeline["y_col_name"]] = '0'
             else:
                 if  iteracion == numero_lotes:
-                    df_LC = pd.DataFrame(LC)
+                    df_LC = pd.DataFrame(pipeline["LC"])
                     batch_set_LC=list(dividir_lotes(df_LC, numero_lotes))
 
                     for i in enumerate(batch_set_LC):
                         print(len(batch_set_LC[i].iloc[:,0].values.tolist()))
-                    LC = []
+                    pipeline["LC"] = []
 
                 df_batchset = pd.DataFrame([batch_set_LC[int(iteracion-numero_lotes)].iloc[:,0].values.tolist()]).T
                 df_batchset.columns = [pipeline["x_col_name"]]
@@ -123,22 +135,33 @@ def ssl_global(model_zoo, pipeline):
 
             datos['df_batchset'] = df_batchset
 
-            EL, LC, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, arch_top1, arch_top2, arch_top3, EL, LC, datos, pipeline, iteracion, models_info)
+            datos, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, 
+                                                arch_top1, arch_top2, arch_top3, 
+                                                datos, pipeline, iteracion, models_info)
             #logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter)])
             #save_logs(logs_label,'label',pipeline)
 
             #df_EL = pd.DataFrame(EL, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores'])
             #df_LC = pd.DataFrame(LC, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores'])
+            print("EL_iter", len(EL_iter))
+            print("LC_iter", len(LC_iter))
+            #df_EL = pd.DataFrame(EL_iter, columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ]) # EXP30
+            #df_LC = pd.DataFrame(LC_iter, columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ]) # EXP30
 
-            df_EL = pd.DataFrame(EL_iter, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores']) # EXP30
-            df_LC = pd.DataFrame(LC_iter, columns=[pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores']) # EXP30
+            df_EL = pd.DataFrame(datos["EL"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
+            df_LC = pd.DataFrame(datos["LC"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
 
-            df_label_stats = label_stats(df_EL, df_LC)
+            os.makedirs(pipeline["path_label_stats"].split('/')[0], exist_ok=True)
+            
+            df_EL.to_pickle(pipeline["path_label_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'_EL.pickle')
+            df_LC.to_pickle(pipeline["path_label_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'_LC.pickle')
+
+            df_label_stats = label_stats(df_EL, df_LC, pipeline)
             print(df_label_stats)
             df_label_stats.to_pickle(pipeline["path_label_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'.pickle')
 
-            #df_train_EL = pd.concat([df_train,df_EL.iloc[:,:2]])
-            df_train_EL = df_EL.iloc[:,:2].copy() # EXP30
+            df_train_EL = pd.concat([datos["df_train"],df_EL.iloc[:,:2]]) # USANDO MUESTRAS TRAIN Y EL
+            #df_train_EL = df_EL.iloc[:,:2].copy() # EXP30 # UNICAMENTE USANDO MUESTRAS EL
             #print(df_train)
             print("df_train_EL")
             print(df_train_EL)
@@ -146,13 +169,24 @@ def ssl_global(model_zoo, pipeline):
             #print(df_train_EL)
             datos['df_train_EL'] = df_train_EL
 
-            df_EL_stats = df_label_stats["df_EL_stats"]["df"]
-            df_LC_stats = df_label_stats["df_LC_stats"]["df"]
+            try:
+                print("AUTO-ESTIMATING OF SSL THRESHOLD ...")
+                df_EL_stats = df_label_stats["df_EL_stats"]["df"]
+                df_LC_stats = df_label_stats["df_LC_stats"]["df"]
 
-            df_U_iter = pd.concat([df_EL_stats,df_LC_stats], ignore_index=True)
+                df_U_iter = pd.concat([df_EL_stats,df_LC_stats], ignore_index=True)
+
+                ssl_th = df_U_iter.describe()["arch_scores_mean"]["mean"]
+                pipeline["ssl_threshold"] = ssl_th
+                print("NEW SSL THRESHOLD: ", ssl_th)
+            except:
+                print("ERROR - AUTO-ESTIMATING SSL THRESHOLD")
+                ssl_th = pipeline["ssl_threshold"]
+                traceback.print_exc()
+            
             #df_U_iter.describe()["arch_scores_mean"]["25%"]
             #df_U_iter = pd.concat([df_EL,df_LC], ignore_index=True)
-            ssl_th = df_U_iter.describe()["arch_scores_mean"]["mean"]
+                
             #EXP 33
             #print("df_U_describe")
             #print(f"MEAN U_{iteracion}: {ssl_th}")
@@ -173,7 +207,7 @@ def ssl_global(model_zoo, pipeline):
 
 #pipeline = {}
 
-pipeline = read_yaml('ssl_baseline.yml')
+#pipeline = read_yaml('ssl_baseline.yml')
 print(pipeline)
 
 #server = 'bivl2ab'
@@ -218,17 +252,17 @@ pipeline['stage_config'] = {
 }
 
 #EL,LC,test_cotraining,predicciones = [],[],[],[]
-test_cotraining,predicciones = [],[]
-logs,logs_time,logs_label = [], [], []
+#test_cotraining,predicciones = [],[]
+#logs,logs_time,logs_label = [], [], []
 
-data_aumentation = True
-early_stopping = True
-semi_method = 'co-training-multi'
-modalidad = 'rapido'
-version = pipeline["id"]
-porcentaje='10%'
-numero_lotes = 5
-label_active = False
+#data_aumentation = True
+#early_stopping = True
+#semi_method = 'co-training-multi'
+#modalidad = 'rapido'
+#version = pipeline["id"]
+#porcentaje='10%'
+#numero_lotes = 5
+#label_active = False
 
 pipeline["modality_config"] = {
     "ultra-fast": {

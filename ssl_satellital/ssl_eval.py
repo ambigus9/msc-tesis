@@ -1,9 +1,12 @@
+import pandas as pd
+import numpy as np
 from ml_generators import generadores
+from utils_general import save_logs
 
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
                     datos, etapa, kfold, iteracion,
-                    pipeline,models_info):
+                    pipeline,models_info, logs):
 
     train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,iteracion,models_info)
     train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,iteracion,models_info)
