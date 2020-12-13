@@ -37,7 +37,8 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
 
     results = pd.DataFrame(predicciones,columns=["filename","predictions"])
 
-    results['filename'] = results['filename'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
+    #results['filename'] = results['filename'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
+    results['filename'] = results['filename'].apply(lambda x:x.split('/')[-2])
     y_true = results['filename'].values.tolist()
     y_pred = results['predictions'].values.tolist()
 

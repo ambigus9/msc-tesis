@@ -1,0 +1,22 @@
+id : 33
+gpu: 5
+dataset: satellital
+dataset_base : AID
+weights : imagenet
+img_height : 256
+img_width : 256
+aug_factor : 2
+batch_size: 16
+batch_size_u: 5
+save_model: False
+x_col_name : image
+y_col_name : class
+ruta_base : data/
+transfer_learning : classic
+save_fig_path : plots/
+modality: slow
+save_path_logs : logs/
+path_label_stats : stats/data_label_stats_
+ssl_threshold : 0.90
+split_train_test : 5
+split_kfold : 4

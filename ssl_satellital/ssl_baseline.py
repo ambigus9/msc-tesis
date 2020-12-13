@@ -26,7 +26,7 @@ from ssl_label import labeling
 from ssl_stats import label_stats
 
 #loading global configuration
-pipeline = read_yaml('ssl_baseline.yml')
+pipeline = read_yaml('ssl_baseline_nwp.yml')
 
 SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -205,28 +205,9 @@ def ssl_global(model_zoo, pipeline):
     end = time.time()
     print(end - start)
 
-#pipeline = {}
-
-#pipeline = read_yaml('ssl_baseline.yml')
 print(pipeline)
 
-#server = 'bivl2ab'
-#dataset = 'satellital'
-#dataset_base = ''
-#metodo = 'semi-supervisado'
-
-#csvs = f'/home/miguel/{dataset}/dataset/tma_info/'
-#archivos = f'/home/miguel/{dataset}/'
-#ruta = f'/home/miguel/{dataset}/'
-
 pipeline['save_path_model'] = '/home/miguel/satellital/models/v7/'
-
-#pipeline["x_col_name"] = 'patch_name'
-#pipeline["y_col_name"] = 'grade_'
-
-#dataset = 'satellital'
-#ruta_base = 'home/miguel/satellital'
-#dataset_base = 'NWPU-RESISC45'
 
 pipeline['stage_config'] = {
     0: {
@@ -250,19 +231,6 @@ pipeline['stage_config'] = {
         'layer_percent': 0.1
     }
 }
-
-#EL,LC,test_cotraining,predicciones = [],[],[],[]
-#test_cotraining,predicciones = [],[]
-#logs,logs_time,logs_label = [], [], []
-
-#data_aumentation = True
-#early_stopping = True
-#semi_method = 'co-training-multi'
-#modalidad = 'rapido'
-#version = pipeline["id"]
-#porcentaje='10%'
-#numero_lotes = 5
-#label_active = False
 
 pipeline["modality_config"] = {
     "ultra-fast": {

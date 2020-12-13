@@ -82,10 +82,10 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     #if etapa == 'train' or etapa == 'train_EL':
     if etapa == 'train' and pipeline["transfer_learning"] == "classic":
         finetune_model = transfer_learning_classic(base_model,
-                                                pipeline["class_num"])
+                                                len( datos["df_train"]["y_col_name"].unique() ))
     elif pipeline["transfer_learning"] == "soft":
         finetune_model = transfer_learning_soft(base_model,
-                                                pipeline["class_num"],
+                                                len( datos["df_train"]["y_col_name"].unique() ),
                                                 pipeline["stage_config"][iteracion])
     else:
         finetune_model = base_model
@@ -106,8 +106,13 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
 
     metrics = ['accuracy']
     loss='categorical_crossentropy'
-    adam = Adam(lr=pipeline["stage_config"][iteracion]['LR'])
 
+    if pipeline["transfer_learning"] == "soft":
+        LR = pipeline['LR']
+    else:
+        LR = pipeline["stage_config"][iteracion]['LR']
+    
+    adam = Adam(lr=float(LR))
     finetune_model.compile(adam, loss=loss, metrics=metrics)
 
     early = EarlyStopping(monitor='val_loss',
@@ -128,9 +133,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     val_score=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
     test_score=finetune_model.evaluate(test_generator,verbose=0,steps=STEP_SIZE_TEST)
 
-    print("Val  Loss      : ", val_score[0])
-    print("Test Loss     : ", test_score[0])
-    print("Val  Accuracy  : ", val_score[1])
+    print("Val  Loss : ", val_score[0])
+    print("Test Loss : ", test_score[0])
+    print("Val  Accuracy : ", val_score[1])
     print("Test Accuracy : ", test_score[1])
 
     end_model = time.time()

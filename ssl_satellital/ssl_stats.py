@@ -25,8 +25,6 @@ def label_stats(df_EL, df_LC, pipeline):
         df_EL_stats_TP = estimate_stats_scores(df_EL_TP)
         labeling_stats["df_EL_stats"] = df_EL_stats
         labeling_stats["df_EL_stats_TP"] = df_EL_stats_TP
-    elif len(df_EL) == 0:
-        labeling_stats["df_EL_stats"] = df_EL
     if len(df_LC) > 0:
         df_LC_stats = estimate_stats_scores(df_LC)
         df_LC["gth"] = df_LC[pipeline["x_col_name"]].apply(lambda x:x.split('/')[-2])

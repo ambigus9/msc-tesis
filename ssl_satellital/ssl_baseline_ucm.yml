@@ -1,12 +1,11 @@
 id : 33
 gpu: 5
 dataset: satellital
-dataset_base : NWPU-RESISC45
+dataset_base : ucmerced
 weights : imagenet
-img_height : 299
-img_width : 299
-aug_factor : 1.5
-class_num: 45
+img_height : 256
+img_width : 256
+aug_factor : 5
 batch_size: 16
 batch_size_u: 5
 save_model: False
@@ -15,7 +14,7 @@ y_col_name : class
 ruta_base : data/
 transfer_learning : classic
 save_fig_path : plots/
-modality: fast
+modality: slow
 save_path_logs : logs/
 path_label_stats : stats/data_label_stats_
 ssl_threshold : 0.90
