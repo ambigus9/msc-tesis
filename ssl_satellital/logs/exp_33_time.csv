@@ -24,3 +24,4 @@ kfold,iteracion,arquitectura,training_time
 0,4,DenseNet169,2409.5668268203735
 0,4,InceptionV4,1857.2186739444733
 0,4,DenseNet121,2329.867547273636
+kfold,iteracion,arquitectura,training_time

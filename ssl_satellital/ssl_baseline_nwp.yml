@@ -15,7 +15,7 @@ y_col_name : class
 ruta_base : data/
 transfer_learning : classic
 save_fig_path : plots/
-modality: slow
+modality: ultra
 save_path_logs : logs/
 path_label_stats : stats/data_label_stats_
 ssl_threshold : 0.90
