@@ -5,3 +5,6 @@ kfold,iteracion,arquitectura,EL,LC
 0,3,DenseNet169,Xception,DenseNet121,2430,706,0.950907538074772
 0,4,DenseNet169,Xception,DenseNet121,1958,1178,0.9272773335307685
 kfold,iteracion,arquitectura,EL,LC
+kfold,iteracion,arquitectura,EL,LC
+kfold,iteracion,arquitectura,EL,LC
+kfold,iteracion,arquitectura,EL,LC

@@ -30,3 +30,6 @@ kfold,iteracion,arquitectura,val_loss,val_accu,test_loss,test_accu
 0,4,DenseNet121,0.3224802193203443,0.9130089,0.3445496062792049,0.908556
 0,4,co-train,,,,0.9069656488549618
 kfold,iteracion,arquitectura,val_loss,val_accu,test_loss,test_accu
+kfold,iteracion,arquitectura,val_loss,val_accu,test_loss,test_accu
+kfold,iteracion,arquitectura,val_loss,val_accu,test_loss,test_accu
+kfold,iteracion,arquitectura,val_loss,val_accu,test_loss,test_accu

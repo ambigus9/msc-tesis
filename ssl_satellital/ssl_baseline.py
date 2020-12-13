@@ -1,22 +1,17 @@
 "MSC Thesis"
 
-#import gc
 import os
-#import csv
-#import time
 import random
 import traceback
 import tensorflow
 import pandas as pd
 import numpy as np
-#import matplotlib.pyplot as plt
 
 from utils_data import get_dataset
 from utils_data import dividir_lotes
 from utils_data import split_train_test
 from utils_data import get_Fold
 
-#from utils_preprocess import dividir_balanceado2
 from utils_general import save_logs
 from utils_general import read_yaml
 
@@ -58,7 +53,6 @@ def ssl_global(model_zoo, pipeline):
 
     datos["df_base"] = get_dataset(pipeline)
     datos = split_train_test(datos, pipeline)
-    #datos = get_Fold(kfold, datos, pipeline)
 
     # Medir tiempo de ejecucion
     import time
@@ -67,18 +61,14 @@ def ssl_global(model_zoo, pipeline):
     for kfold in range(1):
         for iteracion in range(numero_lotes*1):
 
-            #random.seed(SEED)
-            #np.random.seed(SEED)
-            #tensorflow.random.set_random_seed(SEED)
-
             print("\n######################")
             print("K-FOLD {} - ITERACION {}".format(kfold,iteracion))
             print("######################\n")
 
             datos = get_Fold(kfold, datos, pipeline)
             
-            print("DATOS")
-            print(datos)
+            #print("DATOS")
+            #print(datos)
 
             if iteracion == 0:
                 etapa = 'train'
@@ -116,7 +106,6 @@ def ssl_global(model_zoo, pipeline):
 
             if iteracion < numero_lotes:
 
-                #df_batchset = batch_set[iteracion]
                 df_batchset = datos["batch_set"][iteracion]
                 df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
                 df_batchset[pipeline["y_col_name"]] = '0'
@@ -157,14 +146,14 @@ def ssl_global(model_zoo, pipeline):
             df_LC.to_pickle(pipeline["path_label_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'_LC.pickle')
 
             df_label_stats = label_stats(df_EL, df_LC, pipeline)
-            print(df_label_stats)
+            #print(df_label_stats)
             df_label_stats.to_pickle(pipeline["path_label_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'.pickle')
 
             df_train_EL = pd.concat([datos["df_train"],df_EL.iloc[:,:2]]) # USANDO MUESTRAS TRAIN Y EL
             #df_train_EL = df_EL.iloc[:,:2].copy() # EXP30 # UNICAMENTE USANDO MUESTRAS EL
             #print(df_train)
-            print("df_train_EL")
-            print(df_train_EL)
+            #print("df_train_EL")
+            #print(df_train_EL)
             #print(df_EL.iloc[:,:2])
             #print(df_train_EL)
             datos['df_train_EL'] = df_train_EL

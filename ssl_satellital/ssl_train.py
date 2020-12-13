@@ -73,8 +73,7 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
                       class_mode="categorical",
                       target_size=(pipeline['img_height'],pipeline['img_width']))
 
-    
-    num_classes = len( datos["df_train"]["y_col_name"].unique() )
+    num_classes = len( datos["df_train"][ pipeline["y_col_name"] ].unique() )
 
     if etapa == 'train' and pipeline["transfer_learning"] == "classic":
         finetune_model = transfer_learning_classic( base_model, num_classes )
