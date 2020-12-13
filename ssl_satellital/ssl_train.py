@@ -21,15 +21,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
 
     datagen = ImageDataGenerator(
                                     preprocessing_function=preprocess_input,
-                                    rotation_range=40,
-                                    width_shift_range=0.1,
-                                    height_shift_range=0.1,
-                                    shear_range=0.01,
-                                    zoom_range=[0.9, 1.25],
+                                    rotation_range=90,
                                     horizontal_flip=True,
-                                    vertical_flip=False,
-                                    fill_mode='reflect',
-                                    data_format='channels_last'
+                                    vertical_flip=True,
                                 )
 
     if etapa=='train':
@@ -94,11 +88,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     if etapa == 'train':
         NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]
         num_train_images = len(datos['df_train'])*pipeline["aug_factor"]
-        #datos_entrenamiento = datos['df_train'].copy()
     if etapa == 'train_EL':
         NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["batch_epochs"]
         num_train_images = len(datos['df_train_EL'])*pipeline["aug_factor"]
-        #datos_entrenamiento = datos['df_train_EL'].copy()
 
     STEP_SIZE_TRAIN=num_train_images//train_generator.batch_size
     STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
@@ -112,6 +104,7 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     else:
         LR = pipeline["stage_config"][iteracion]['LR']
     
+    print(f"LEARNING RATE: {LR}")
     adam = Adam(lr=float(LR))
     finetune_model.compile(adam, loss=loss, metrics=metrics)
 
