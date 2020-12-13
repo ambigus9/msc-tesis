@@ -1,3 +1,6 @@
 ssl_satellital/notebooks/.ipynb_checkpoints
 ssl_satellital/data/
 ssl_satellital/__pycache__
+ssl_satellital/plots/
+ssl_satellital/stats/
+ssl_satellital/logs/
