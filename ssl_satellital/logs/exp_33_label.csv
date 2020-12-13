@@ -1,10 +1,4 @@
 kfold,iteracion,arquitectura,EL,LC
-0,0,InceptionV4,ResNet50,DenseNet169,1528,1608,0.8629762636668676
-0,1,DenseNet169,Xception,ResNet50,2378,758,0.937732584508402
-0,2,DenseNet169,Xception,DenseNet121,1906,1230,0.9194713425489941
-0,3,DenseNet169,Xception,DenseNet121,2404,732,0.9491865754707203
-kfold,iteracion,arquitectura,EL,LC
-kfold,iteracion,arquitectura,EL,LC
 0,0,InceptionV4,ResNet50,DenseNet169,1522,1614,0.8631248589348504
 0,1,DenseNet169,Xception,ResNet50,2459,677,0.9453388048117334
 0,2,DenseNet169,Xception,DenseNet121,1876,1260,0.9197102177422494
