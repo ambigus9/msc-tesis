@@ -67,9 +67,6 @@ def ssl_global(model_zoo, pipeline):
 
             datos = get_Fold(kfold, datos, pipeline)
             
-            #print("DATOS")
-            #print(datos)
-
             if iteracion == 0:
                 etapa = 'train'
             else:
@@ -86,7 +83,6 @@ def ssl_global(model_zoo, pipeline):
                     'model_performance': model_performance['val_acc']
                 }
 
-            #import pandas as pd
             df_temp = pd.DataFrame(models_info).T
             top_models = df_temp.sort_values('model_performance', ascending=False)
             top_models = top_models.reset_index()['index'].values.tolist()[:3]
@@ -124,9 +120,11 @@ def ssl_global(model_zoo, pipeline):
 
             datos['df_batchset'] = df_batchset
 
+            print("LABELING ...")
             datos, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, 
                                                 arch_top1, arch_top2, arch_top3, 
                                                 datos, pipeline, iteracion, models_info)
+            print("OK - LABELING")
             #logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter)])
             #save_logs(logs_label,'label',pipeline)
 
