@@ -2,13 +2,14 @@
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from ssl_train import get_model
+from ssl_train import get_preprocess_function
 
 def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, models_info):
 
-    _ , preprocess_input = get_model(architecture, iteracion, models_info, pipeline)
+    preprocess_function = get_preprocess_function(architecture)
 
     datagen = ImageDataGenerator(
-                                    preprocessing_function=preprocess_input,
+                                    preprocessing_function=preprocess_function,
                                     rotation_range=90,
                                     horizontal_flip=True,
                                     vertical_flip=True,
@@ -40,7 +41,7 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, m
                          shuffle=True)
         print("OK - CREATING GENERATOR FOR TRAIN_EL FROM GENERATORS")
 
-    test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+    test_datagen = ImageDataGenerator(preprocessing_function=preprocess_function)
 
     test_generator=test_datagen.flow_from_dataframe(
                     dataframe=datos['df_test'],
@@ -56,7 +57,7 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, m
 
     if label_active:
         print("LABEL ACTIVE FROM GENERATORS ...")
-        batchset_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+        batchset_datagen = ImageDataGenerator(preprocessing_function=preprocess_function)
 
         batchset_generator=batchset_datagen.flow_from_dataframe(
                       dataframe=datos['df_batchset'],

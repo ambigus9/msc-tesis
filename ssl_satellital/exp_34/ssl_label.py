@@ -48,11 +48,14 @@ def labeling(etapa, modelo1, modelo2, modelo3, arquitectura1, arquitectura2, arq
         arch_scores[arquitectura2] = df2['Max_Probability'][i]
         arch_scores[arquitectura3] = df3['Max_Probability'][i]
 
-        c1 = (df1['Predictions'][i] == df2['Predictions'][i]) and  (df1['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df2['Max_Probability'][i] > pipeline["ssl_threshold"])
-        c2 = (df1['Predictions'][i] == df3['Predictions'][i]) and  (df1['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df3['Max_Probability'][i] > pipeline["ssl_threshold"])
-        c3 = (df2['Predictions'][i] == df3['Predictions'][i]) and  (df2['Max_Probability'][i] > pipeline["ssl_threshold"]) and (df3['Max_Probability'][i] > pipeline["ssl_threshold"])
+        c1 = (df1['Predictions'][i] == df2['Predictions'][i])
+        c2 = (df2['Predictions'][i] == df3['Predictions'][i])
 
-        if c1 and c2 and c3:
+        p1 = (df1['Max_Probability'][i] > pipeline["ssl_threshold"])
+        p2 = (df2['Max_Probability'][i] > pipeline["ssl_threshold"])
+        p3 = (df3['Max_Probability'][i] > pipeline["ssl_threshold"])
+
+        if c1 and c2 and p1 and p2 and p3:
             datos["EL"].append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             EL_iter.append([df1['Filename'][i], df1['Predictions'][i], arch_scores])
             etiquetados_EL += 1

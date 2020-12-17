@@ -3,31 +3,21 @@
 import os
 import random
 import traceback
-import tensorflow
-import pandas as pd
-import numpy as np
-
-from utils_data import get_dataset
-from utils_data import dividir_lotes
-from utils_data import split_train_test
-from utils_data import get_Fold
-
-from utils_general import save_logs
 from utils_general import read_yaml
-
-from ssl_train import training
-from ssl_eval import evaluate_cotrain
-from ssl_label import labeling
-from ssl_stats import label_stats
 
 #loading global configuration
 pipeline = read_yaml('ssl_baseline.yml')
 
-SEED = 8128
+SEED = 42
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]=str(pipeline["gpu"])
 os.environ['PYTHONHASHSEED']=str(SEED)
 os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+os.environ['TF_DETERMINISTIC_OPS'] = '1'
+
+import tensorflow
+import numpy as np
+import pandas as pd
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -36,6 +26,18 @@ tensorflow.random.set_random_seed(SEED)
 if pipeline["gpu"] >= 0:
     gpus = tensorflow.config.experimental.list_physical_devices('GPU')
     tensorflow.config.experimental.set_memory_growth(gpus[0], True)
+
+from utils_data import get_dataset
+from utils_data import dividir_lotes
+from utils_data import split_train_test
+from utils_data import get_Fold
+
+from utils_general import save_logs
+
+from ssl_train import training
+from ssl_eval import evaluate_cotrain
+from ssl_label import labeling
+from ssl_stats import label_stats
 
 # TO DO -> USE UNIVERSAL DICTS
 logs,logs_time,logs_label = [], [], []
@@ -56,13 +58,14 @@ def ssl_global(model_zoo, pipeline):
     start = time.time()
 
     for kfold in range(1):
+
+        datos = get_Fold(kfold, datos, pipeline)
+
         for iteracion in range(numero_lotes*1):
 
             print("\n######################")
             print("K-FOLD {} - ITERACION {}".format(kfold,iteracion))
             print("######################\n")
-
-            datos = get_Fold(kfold, datos, pipeline)
             
             if iteracion == 0:
                 etapa = 'train'
@@ -96,33 +99,16 @@ def ssl_global(model_zoo, pipeline):
             print("\n")
             print("OK - EVALUATING CO-TRAINING")
 
-            if semi_method == 'supervised':
-                break
+            print(f"GETTING BATCH_SET OF ITERATION {iteracion}...")
 
-            if iteracion < numero_lotes:
-
-                df_batchset = datos["batch_set"][iteracion]
-                df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
-                df_batchset[pipeline["y_col_name"]] = '0'
-            else:
-                if  iteracion == numero_lotes:
-                    df_LC = pd.DataFrame(pipeline["LC"])
-                    batch_set_LC=list(dividir_lotes(df_LC, numero_lotes))
-
-                    for i in enumerate(batch_set_LC):
-                        print(len(batch_set_LC[i].iloc[:,0].values.tolist()))
-                    pipeline["LC"] = []
-
-                df_batchset = pd.DataFrame([batch_set_LC[int(iteracion-numero_lotes)].iloc[:,0].values.tolist()]).T
-                df_batchset.columns = [pipeline["x_col_name"]]
-                df_batchset[pipeline["y_col_name"]] = '0'
+            df_batchset = datos["batch_set"][iteracion]
+            df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+            df_batchset[pipeline["y_col_name"]] = '0'
 
             datos['df_batchset'] = df_batchset
 
-            print("DF BATCHSET DE ITERACION", iteracion)
-            print(datos['df_batchset'])
-
             print("LABELING ...")
+
             datos, EL_iter, LC_iter = labeling(etapa, mod_top1, mod_top2, mod_top3, 
                                                 arch_top1, arch_top2, arch_top3, 
                                                 datos, pipeline, iteracion, models_info)

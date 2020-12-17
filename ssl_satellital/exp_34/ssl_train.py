@@ -85,14 +85,25 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     num_classes = len( datos["df_train"][ pipeline["y_col_name"] ].unique() )
     print("NUM CLASSES", num_classes)
 
-    if etapa == 'train' and pipeline["transfer_learning"] == "classic":
-        finetune_model = transfer_learning_classic( base_model, num_classes )
+    if pipeline["transfer_learning"] == "classic":
+        if pipeline["restart_weights"]:
+            print("TRANSFER LEARNING - CLASSIC + YES RESTART WEIGHTS")
+            finetune_model = transfer_learning_classic( base_model, num_classes )
+            print("OK - TRANSFER LEARNING - CLASSIC + YES RESTART WEIGHTS")
+        else:
+            if etapa == 'train':
+                print("TRANSFER LEARNING - TRAIN + CLASSIC")
+                finetune_model = transfer_learning_classic( base_model, num_classes )
+                print("OK - TRANSFER LEARNING - TRAIN + CLASSIC")
+            elif etapa == 'train_EL':
+                print("TRANSFER LEARNING - TRAIN_EL + CLASSIC + NO RESTART WEIGHTS")
+                finetune_model = base_model
+                print("OK - TRANSFER LEARNING - TRAIN_EL + CLASSIC + NO RESTART WEIGHTS")
     elif pipeline["transfer_learning"] == "soft":
+        print("TRANSFER LEARNING - TRAIN + SOFT")
         finetune_model = transfer_learning_soft( base_model, num_classes,
                                                  pipeline["stage_config"][iteracion] )
-    else:
-        finetune_model = base_model
-    
+        print("OK - TRANSFER LEARNING - TRAIN + SOFT")    
 
     if etapa == 'train':
         NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]
@@ -168,6 +179,19 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
 
     return finetune_model , model_performance
 
+def get_preprocess_function(architecture):
+    
+    if architecture == 'InceptionV3':
+        from tensorflow.keras.applications.inception_v3 import preprocess_input
+    
+    if architecture == 'InceptionV4':
+        from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
+
+    if architecture == 'ResNet152':
+        from tensorflow.keras.applications.resnet import preprocess_input
+
+    return preprocess_input    
+
 def get_model(architecture, iteracion, models_info, pipeline):
 
     print("="*len(architecture))
@@ -175,16 +199,24 @@ def get_model(architecture, iteracion, models_info, pipeline):
     print("="*len(architecture))
 
     if iteracion > 0 and not pipeline["restart_weights"]:
+        print("USING MODELS FROM MEMORY")
         base_model = models_info[architecture]['model_memory']
+        print("OK - USING MODELS FROM MEMORY")
 
     if architecture == 'InceptionV3':
         from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
+
         if iteracion == 0 or pipeline["restart_weights"]:
             base_model = InceptionV3(weights=pipeline['weights'],include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
+            print(f"OK - RESTARTING WEIGHTS FROM IMAGENET FOR {architecture}")
+
     if architecture == 'InceptionV4':
         from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
+
         if iteracion == 0 or pipeline["restart_weights"]:
             base_model = InceptionResNetV2(weights=pipeline['weights'],include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
+            print(f"OK - RESTARTING WEIGHTS FROM IMAGENET FOR {architecture}")
+
     if architecture == 'ResNet50':
         from tensorflow.keras.applications.resnet import ResNet50, preprocess_input
         if iteracion == 0 or pipeline["restart_weights"]:
@@ -193,10 +225,13 @@ def get_model(architecture, iteracion, models_info, pipeline):
         from tensorflow.keras.applications.resnet import ResNet101, preprocess_input
         if iteracion == 0 or pipeline["restart_weights"]:
             base_model = ResNet101(weights=pipeline['weights'],include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
+    
     if architecture == 'ResNet152':
         from tensorflow.keras.applications.resnet import ResNet152, preprocess_input
         if iteracion == 0 or pipeline["restart_weights"]:
             base_model = ResNet152(weights=pipeline['weights'],include_top=False,input_shape=(pipeline['img_height'], pipeline['img_width'], 3))
+            print(f"OK - RESTARTING WEIGHTS FROM IMAGENET FOR {architecture}")
+
     if architecture == 'DenseNet121':
         from tensorflow.keras.applications.densenet import DenseNet121, preprocess_input
         if iteracion == 0 or pipeline["restart_weights"]:

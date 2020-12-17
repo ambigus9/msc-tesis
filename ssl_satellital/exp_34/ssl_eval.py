@@ -21,9 +21,8 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
 
         c1 = (df1['Predictions'][i] == df2['Predictions'][i])
         c2 = (df1['Predictions'][i] == df3['Predictions'][i])
-        c3 = (df2['Predictions'][i] == df3['Predictions'][i])
 
-        if c1 and c2 and c3:
+        if c1 and c2:
             predicciones.append([df1['Filename'][i],df1['Predictions'][i]])
         else:
             probabilidades = np.array([df1['Max_Probability'][i],df2['Max_Probability'][i],df3['Max_Probability'][i]])
@@ -37,7 +36,6 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
 
     results = pd.DataFrame(predicciones,columns=["filename","predictions"])
 
-    #results['filename'] = results['filename'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
     results['filename'] = results['filename'].apply(lambda x:x.split('/')[-2])
     y_true = results['filename'].values.tolist()
     y_pred = results['predictions'].values.tolist()
@@ -50,8 +48,9 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     save_logs(logs,'train',pipeline)
     return co_train_accu
 
-def evaluar(modelo,train_generator,test_generator,STEP_SIZE_TEST):
-    pred=modelo.predict(test_generator,steps=STEP_SIZE_TEST,verbose=0)
+def evaluar(modelo, train_generator, test_generator, test_steps):
+
+    pred=modelo.predict(test_generator,steps=test_steps,verbose=0)
 
     predicted_class_indices=np.argmax(pred,axis=1)
     predicted_class_probab=np.max(pred,axis=1)
