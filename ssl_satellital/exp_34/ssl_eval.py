@@ -6,15 +6,15 @@ from utils_general import save_logs
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
                     datos, etapa, kfold, iteracion,
-                    pipeline,models_info, logs):
+                    pipeline, models_info, logs):
 
-    train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,iteracion,models_info)
-    train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,iteracion,models_info)
-    train_generator_arch3,test1_generator_arch3,STEP_SIZE_TEST1_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,iteracion,models_info)
+    train_generator_arch1,test_generator_arch1,STEP_SIZE_TEST_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,iteracion,models_info)
+    train_generator_arch2,test_generator_arch2,STEP_SIZE_TEST_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,iteracion,models_info)
+    train_generator_arch3,test_generator_arch3,STEP_SIZE_TEST_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,iteracion,models_info)
 
-    df1=evaluar(modelo1,train_generator_arch1,test1_generator_arch1,STEP_SIZE_TEST1_arch1)
-    df2=evaluar(modelo2,train_generator_arch2,test1_generator_arch2,STEP_SIZE_TEST1_arch2)
-    df3=evaluar(modelo3,train_generator_arch3,test1_generator_arch3,STEP_SIZE_TEST1_arch3)
+    df1=evaluar(modelo1,train_generator_arch1,test_generator_arch1,STEP_SIZE_TEST_arch1)
+    df2=evaluar(modelo2,train_generator_arch2,test_generator_arch2,STEP_SIZE_TEST_arch2)
+    df3=evaluar(modelo3,train_generator_arch3,test_generator_arch3,STEP_SIZE_TEST_arch3)
 
     predicciones = []
     for i in range(len(df1)):
@@ -29,10 +29,9 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
             indice_prob_max = probabilidades.argmax()
 
             clases = np.array([df1['Predictions'][i],df2['Predictions'][i],df3['Predictions'][i]])
-            indice_clas_max = clases.argmax()
 
             real = np.array([df1['Filename'][i],df2['Filename'][i],df3['Filename'][i]])
-            predicciones.append([real[indice_prob_max],clases[indice_clas_max]])
+            predicciones.append([real[indice_prob_max],clases[indice_prob_max]])
 
     results = pd.DataFrame(predicciones,columns=["filename","predictions"])
 
@@ -59,7 +58,7 @@ def evaluar(modelo, train_generator, test_generator, test_steps):
     labels = dict((v,k) for k,v in labels.items())
     predictions = [labels[k] for k in predicted_class_indices]
 
-    filenames=test_generator.filenames
+    filenames = test_generator.filenames
     diferencia = len(predictions)-len(filenames)
 
     if len(predictions)-len(filenames) == 0:

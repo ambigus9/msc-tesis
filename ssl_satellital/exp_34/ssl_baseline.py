@@ -4,6 +4,7 @@ import os
 import random
 import traceback
 from utils_general import read_yaml
+#from utils_general import reset_keras
 
 #loading global configuration
 pipeline = read_yaml('ssl_baseline.yml')
@@ -49,7 +50,7 @@ def ssl_global(model_zoo, pipeline):
     semi_method = 'co-training-multi'
 
     datos = {}
-    models_info = {}
+    #models_info = {}
     datos["df_base"] = get_dataset(pipeline)
     datos = split_train_test(datos, pipeline)
 
@@ -59,6 +60,7 @@ def ssl_global(model_zoo, pipeline):
 
     for kfold in range(1):
 
+        models_info = {}
         datos = get_Fold(kfold, datos, pipeline)
 
         for iteracion in range(numero_lotes*1):
@@ -134,36 +136,12 @@ def ssl_global(model_zoo, pipeline):
             
             logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter),ssl_th])
             save_logs(logs_label,'label',pipeline)
+            #reset_keras()
 
     end = time.time()
     print(end - start)
 
 print(pipeline)
-
-pipeline['save_path_model'] = '/home/miguel/satellital/models/v7/'
-
-pipeline['stage_config'] = {
-    0: {
-        'LR': 1e-5,
-        'layer_percent': 1
-    },
-    1: {
-        'LR': 1e-5,
-        'layer_percent': 0.7
-    },
-    2: {
-        'LR': 1e-5,
-        'layer_percent': 0.5
-    },
-    3: {
-        'LR': 1e-6,
-        'layer_percent': 0.3
-    },
-    4: {
-        'LR': 1e-6,
-        'layer_percent': 0.1
-    }
-}
 
 pipeline["modality_config"] = {
     "ultra-fast": {
@@ -206,5 +184,5 @@ os.makedirs( plot_accu , exist_ok=True)
 os.makedirs( plot_loss , exist_ok=True)
 os.makedirs( plot_conf , exist_ok=True)
 
-models = ['InceptionV3','ResNet152','InceptionV4']
+models = ['ResNet152','InceptionV3','InceptionV4']
 ssl_global(model_zoo=models, pipeline=pipeline)

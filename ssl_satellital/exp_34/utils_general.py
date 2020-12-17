@@ -12,6 +12,11 @@ def read_yaml(yml_path):
         dataMap = yaml.safe_load(f)
     return dataMap
 
+def reset_keras():
+    # Reset Keras Session
+    clear_session()
+    print(gc.collect())
+
 def save_plots(history, kfold, iteracion, architecture, pipeline):
     #os.makedirs(pipeline["save_fig_path"], exist_ok=True)
     ID = pipeline['id']

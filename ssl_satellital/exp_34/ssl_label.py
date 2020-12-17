@@ -49,7 +49,7 @@ def labeling(etapa, modelo1, modelo2, modelo3, arquitectura1, arquitectura2, arq
         arch_scores[arquitectura3] = df3['Max_Probability'][i]
 
         c1 = (df1['Predictions'][i] == df2['Predictions'][i])
-        c2 = (df2['Predictions'][i] == df3['Predictions'][i])
+        c2 = (df1['Predictions'][i] == df3['Predictions'][i])
 
         p1 = (df1['Max_Probability'][i] > pipeline["ssl_threshold"])
         p2 = (df2['Max_Probability'][i] > pipeline["ssl_threshold"])
