@@ -3,6 +3,8 @@ import numpy as np
 from ml_generators import generadores
 from utils_general import save_logs
 
+from sklearn.metrics import precision_recall_fscore_support
+
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
                     datos, etapa, kfold, iteracion,
@@ -29,8 +31,8 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
             indice_prob_max = probabilidades.argmax()
 
             clases = np.array([df1['Predictions'][i],df2['Predictions'][i],df3['Predictions'][i]])
-
             real = np.array([df1['Filename'][i],df2['Filename'][i],df3['Filename'][i]])
+            
             predicciones.append([real[indice_prob_max],clases[indice_prob_max]])
 
     results = pd.DataFrame(predicciones,columns=["filename","predictions"])
@@ -39,11 +41,30 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     y_true = results['filename'].values.tolist()
     y_pred = results['predictions'].values.tolist()
 
+    labels_arch1 = (train_generator_arch1.class_indices)
+    #labels2 = (train_generator_arch2.class_indices)
+    #labels3 = (train_generator_arch2.class_indices)
+
+    #if labels1 == labels2
+    print("LABELS CO-TRAIN")
+    print([*labels_arch1])
+
+    #class_report = classification_report(y_true, y_pred, target_names=[*labels])
+    class_metrics = precision_recall_fscore_support(y_true, y_pred, average='macro')
+
     from sklearn.metrics import accuracy_score
     co_train_accu = accuracy_score(y_pred,y_true)
     co_train_label = 'co-train'
 
-    logs.append([kfold,iteracion,co_train_label,None,None,None,co_train_accu])
+    logs.append([kfold,iteracion,co_train_label,None,None,None,co_train_accu,
+    class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
+
+    print(f"Co-train Accuracy: {co_train_accu}")
+    print(f"Co-train Precision: {class_metrics[0]}")
+    print(f"Co-train Recall: {class_metrics[1]}")
+    print(f"Co-train F1-Score: {class_metrics[2]}")
+    print(f"Co-train Support: {class_metrics[3]}")
+
     save_logs(logs,'train',pipeline)
     return co_train_accu
 
@@ -70,3 +91,23 @@ def evaluar(modelo, train_generator, test_generator, test_steps):
                             "Predictions":predictions,
                           "Max_Probability":predicted_class_probab})
     return results
+
+def classification_metrics(model, train_generator, test_generator, test_steps):
+
+    df_pred = evaluar(model, train_generator, test_generator, test_steps)
+
+    prediction_names = df_pred['Filename'].apply(lambda x:x.split('/')[-2])
+    y_true = prediction_names.values.tolist()
+    y_pred = df_pred['Predictions'].values.tolist()
+
+    labels = (train_generator.class_indices)
+    #labels = dict((v,k) for k,v in labels.items())
+    #labels.items()
+    print("LABELS")
+    #print(labels.)
+    print([*labels])
+
+    #class_report = classification_report(y_true, y_pred, target_names=[*labels])
+    class_metrics = precision_recall_fscore_support(y_true, y_pred, average='macro')
+    print(class_metrics)
+    return class_metrics

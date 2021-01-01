@@ -4,12 +4,12 @@ import os
 import random
 import traceback
 from utils_general import read_yaml
-#from utils_general import reset_keras
+from utils_general import reset_keras
 
 #loading global configuration
 pipeline = read_yaml('ssl_baseline.yml')
 
-SEED = 42
+SEED = 8128
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]=str(pipeline["gpu"])
 os.environ['PYTHONHASHSEED']=str(SEED)
@@ -37,6 +37,7 @@ from utils_general import save_logs
 
 from ssl_train import training
 from ssl_eval import evaluate_cotrain
+from ssl_eval import classification_metrics
 from ssl_label import labeling
 from ssl_stats import label_stats
 
@@ -46,13 +47,13 @@ logs,logs_time,logs_label = [], [], []
 ## Preparar dataset
 def ssl_global(model_zoo, pipeline):
 
-    numero_lotes = 5
     semi_method = 'co-training-multi'
 
     datos = {}
     #models_info = {}
     datos["df_base"] = get_dataset(pipeline)
     datos = split_train_test(datos, pipeline)
+    #numero_lotes = len(datos["batch_set"])
 
     # Medir tiempo de ejecucion
     import time
@@ -62,11 +63,14 @@ def ssl_global(model_zoo, pipeline):
 
         models_info = {}
         datos = get_Fold(kfold, datos, pipeline)
+        
+        numero_lotes = len(datos["batch_set"])
+        #print("LEN OF batch_size_u", )
 
         for iteracion in range(numero_lotes*1):
 
             print("\n######################")
-            print("K-FOLD {} - ITERACION {}".format(kfold,iteracion))
+            print(f"K-FOLD {kfold} - ITERACION {iteracion}")
             print("######################\n")
             
             if iteracion == 0:
@@ -78,7 +82,7 @@ def ssl_global(model_zoo, pipeline):
 
             for model in model_zoo:
 
-                model_memory , model_performance = training(kfold,etapa,datos,model,iteracion,models_info,pipeline)
+                model_memory , model_performance = training(kfold,etapa,datos,model,iteracion,models_info,classification_metrics,pipeline)
 
                 models_info[model] = {
                     'model_memory': model_memory,
@@ -136,7 +140,12 @@ def ssl_global(model_zoo, pipeline):
             
             logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter),ssl_th])
             save_logs(logs_label,'label',pipeline)
-            #reset_keras()
+            reset_keras()
+
+            #re-assigning SEED
+            random.seed(SEED)
+            np.random.seed(SEED)
+            tensorflow.random.set_random_seed(SEED)
 
     end = time.time()
     print(end - start)
@@ -167,7 +176,7 @@ pipeline["modality_config"] = {
 }
 
 logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
-"test_loss","test_accu"])
+"test_loss","test_accu","test_precision","test_recall","test_f1score","support"])
 logs_time.append(["kfold","iteracion","arquitectura","training_time"])
 logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
 

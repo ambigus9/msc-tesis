@@ -14,7 +14,8 @@ y_col_name: class
 ruta_base: ../data/
 transfer_learning: classic
 restart_weights: True
-modality: slow
+learning_rate: 1e-5
+modality: ultra
 save_fig_path: plots/
 save_path_logs: logs/
 path_label_stats: stats/data_label_stats_

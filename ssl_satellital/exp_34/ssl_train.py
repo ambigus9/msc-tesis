@@ -7,13 +7,15 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
 
+#from ssl_eval import classification_metrics
+
 from utils_general import save_plots
 from utils_general import save_logs
 
 from ml_strategy import transfer_learning_classic
 from ml_strategy import transfer_learning_soft
 
-def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline):
+def training(kfold, etapa, datos, architecture, iteracion, models_info, classification_metrics, pipeline):
 
     start_model = time.time()
     base_model, preprocess_input = get_model(architecture, iteracion, models_info, pipeline)
@@ -119,9 +121,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     metrics = ['accuracy']
     loss='categorical_crossentropy'
 
-    if pipeline["transfer_learning"] == "soft":
-        LR = pipeline['LR']
-    else:
+    if pipeline["transfer_learning"] == "classic":
+        LR = pipeline['learning_rate']
+    elif pipeline["transfer_learning"] == "soft":
         LR = pipeline["stage_config"][iteracion]['LR']
     
     print(f"LEARNING RATE: {LR}")
@@ -146,18 +148,26 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, pipeline
     val_score=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
     test_score=finetune_model.evaluate(test_generator,verbose=0,steps=STEP_SIZE_TEST)
 
+    class_metrics = classification_metrics(finetune_model, train_generator, test_generator, STEP_SIZE_TEST)
+
     print("Val  Loss : ", val_score[0])
     print("Test Loss : ", test_score[0])
     print("Val  Accuracy : ", val_score[1])
     print("Test Accuracy : ", test_score[1])
 
+    print(f"Test Precision: {class_metrics[0]}")
+    print(f"Test Recall: {class_metrics[1]}")
+    print(f"Test F1-Score: {class_metrics[2]}")
+    print(f"Test Support: {class_metrics[3]}")
+
     end_model = time.time()
     time_training = end_model - start_model
-    print(f"training {architecture}",time_training)
+    print(f"training time of - {architecture}",time_training)
 
     logs = []
     logs.append([kfold,iteracion,architecture,val_score[0],val_score[1],
-            test_score[0],test_score[1]])
+            test_score[0],test_score[1],class_metrics[0],class_metrics[1],
+            class_metrics[2],class_metrics[3]])
 
     logs_time = []
     logs_time.append([kfold,iteracion,architecture,time_training])
