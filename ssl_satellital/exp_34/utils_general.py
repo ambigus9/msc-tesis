@@ -22,6 +22,7 @@ def plot_confusion_matrix(y_true, y_pred, labels, kfold, iteracion, architecture
     from sklearn.metrics import confusion_matrix
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import pandas as pd
 
     cm = confusion_matrix(y_true, y_pred)
     cm_df = pd.DataFrame(cm,labels,labels)
@@ -76,7 +77,3 @@ def save_logs(logs, log_type, pipeline):
     for l in [logs[-1]]:
         writer.writerow(l)
     file.close()
-
-def reset_keras():
-    clear_session()
-    print(gc.collect())

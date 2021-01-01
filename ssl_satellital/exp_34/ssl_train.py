@@ -201,7 +201,7 @@ def get_preprocess_function(architecture):
     if architecture == 'ResNet152':
         from tensorflow.keras.applications.resnet import preprocess_input
 
-    return preprocess_input    
+    return preprocess_input
 
 def get_model(architecture, iteracion, models_info, pipeline):
 

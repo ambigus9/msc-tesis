@@ -51,14 +51,17 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     print("LABELS CO-TRAIN")
     print([*labels_arch1])
 
+    architecture = 'co-train'
+
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
     plot_confusion_matrix(y_true, y_pred, labels_arch1, kfold, iteracion, architecture, pipeline)
     
     from sklearn.metrics import accuracy_score
-    co_train_accu = accuracy_score(y_pred,y_true)
-    co_train_label = 'co-train'
+    co_train_accu = accuracy_score(y_true,y_pred)
+    #co_train_label = 'co-train'
+    #architecture = 'co-train'
 
-    logs.append([kfold,iteracion,co_train_label,None,None,None,co_train_accu,
+    logs.append([kfold,iteracion,architecture,None,None,None,co_train_accu,
     class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
 
     print(f"Co-train Accuracy: {co_train_accu}")
