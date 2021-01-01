@@ -148,7 +148,8 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     val_score=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
     test_score=finetune_model.evaluate(test_generator,verbose=0,steps=STEP_SIZE_TEST)
 
-    class_metrics = classification_metrics(finetune_model, train_generator, test_generator, STEP_SIZE_TEST)
+    class_metrics = classification_metrics(finetune_model, train_generator, test_generator, STEP_SIZE_TEST,
+                                            kfold, iteracion, architecture, pipeline)
 
     print("Val  Loss : ", val_score[0])
     print("Test Loss : ", test_score[0])

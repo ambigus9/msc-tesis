@@ -2,8 +2,10 @@ import pandas as pd
 import numpy as np
 from ml_generators import generadores
 from utils_general import save_logs
+from utils_general import plot_confusion_matrix
 
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import confusion_matrix
 
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
@@ -49,9 +51,9 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     print("LABELS CO-TRAIN")
     print([*labels_arch1])
 
-    #class_report = classification_report(y_true, y_pred, target_names=[*labels])
-    class_metrics = precision_recall_fscore_support(y_true, y_pred, average='macro')
-
+    class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
+    plot_confusion_matrix(y_true, y_pred, labels_arch1, kfold, iteracion, architecture, pipeline)
+    
     from sklearn.metrics import accuracy_score
     co_train_accu = accuracy_score(y_pred,y_true)
     co_train_label = 'co-train'
@@ -92,7 +94,8 @@ def evaluar(modelo, train_generator, test_generator, test_steps):
                           "Max_Probability":predicted_class_probab})
     return results
 
-def classification_metrics(model, train_generator, test_generator, test_steps):
+def classification_metrics(model, train_generator, test_generator, test_steps, 
+                            kfold, iteracion, architecture, pipeline):
 
     df_pred = evaluar(model, train_generator, test_generator, test_steps)
 
@@ -101,13 +104,12 @@ def classification_metrics(model, train_generator, test_generator, test_steps):
     y_pred = df_pred['Predictions'].values.tolist()
 
     labels = (train_generator.class_indices)
-    #labels = dict((v,k) for k,v in labels.items())
-    #labels.items()
+
     print("LABELS")
-    #print(labels.)
     print([*labels])
 
-    #class_report = classification_report(y_true, y_pred, target_names=[*labels])
-    class_metrics = precision_recall_fscore_support(y_true, y_pred, average='macro')
+    class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
+    plot_confusion_matrix(y_true, y_pred, labels, kfold, iteracion, architecture, pipeline)
+    
     print(class_metrics)
     return class_metrics

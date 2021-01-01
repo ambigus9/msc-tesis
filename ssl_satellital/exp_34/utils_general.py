@@ -17,6 +17,25 @@ def reset_keras():
     clear_session()
     print(gc.collect())
 
+def plot_confusion_matrix(y_true, y_pred, labels, kfold, iteracion, architecture, pipeline):
+
+    from sklearn.metrics import confusion_matrix
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    cm = confusion_matrix(y_true, y_pred)
+    cm_df = pd.DataFrame(cm,labels,labels)
+
+    plt.figure(figsize=(10,6))
+    sns.heatmap(cm_df, annot=True)
+
+    ID = pipeline['id']
+    save_fig_name = f"exp_{ID:02d}_cm_{kfold:02d}_{iteracion:02d}_{architecture}.png"
+    save_fig_cm = os.path.join(pipeline["save_fig_path"] , 'conf' , save_fig_name)
+
+    plt.savefig(save_fig_cm)
+    plt.clf()
+
 def save_plots(history, kfold, iteracion, architecture, pipeline):
     #os.makedirs(pipeline["save_fig_path"], exist_ok=True)
     ID = pipeline['id']

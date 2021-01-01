@@ -22,3 +22,4 @@ path_label_stats: stats/data_label_stats_
 ssl_threshold: 0.90
 split_train_test: 5
 split_kfold: 4
+metrics: weighted
