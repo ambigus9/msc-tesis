@@ -47,7 +47,7 @@ logs,logs_time,logs_label = [], [], []
 ## Preparar dataset
 def ssl_global(model_zoo, pipeline):
 
-    semi_method = 'co-training-multi'
+    #semi_method = 'co-training-multi'
 
     datos = {}
     #models_info = {}

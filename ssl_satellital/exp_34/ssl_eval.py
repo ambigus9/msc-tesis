@@ -5,7 +5,7 @@ from utils_general import save_logs
 from utils_general import plot_confusion_matrix
 
 from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import confusion_matrix
+#from sklearn.metrics import confusion_matrix
 
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
