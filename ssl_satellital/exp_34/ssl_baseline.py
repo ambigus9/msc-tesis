@@ -47,30 +47,25 @@ logs,logs_time,logs_label = [], [], []
 ## Preparar dataset
 def ssl_global(model_zoo, pipeline):
 
-    #semi_method = 'co-training-multi'
-
     datos = {}
-    #models_info = {}
     datos["df_base"] = get_dataset(pipeline)
     datos = split_train_test(datos, pipeline)
-    #numero_lotes = len(datos["batch_set"])
 
     # Medir tiempo de ejecucion
     import time
     start = time.time()
 
-    for kfold in range(1):
+    for kfold in range(pipeline["split_kfold"]):
 
         models_info = {}
         datos = get_Fold(kfold, datos, pipeline)
         
         numero_lotes = len(datos["batch_set"])
-        #print("LEN OF batch_size_u", )
 
         for iteracion in range(numero_lotes*1):
 
             print("\n######################")
-            print(f"K-FOLD {kfold} - ITERACION {iteracion}")
+            print(f"K-FOLD {kfold}/{pipeline["split_kfold"]} - ITERACION {iteracion}/{numero_lotes}")
             print("######################\n")
             
             if iteracion == 0:

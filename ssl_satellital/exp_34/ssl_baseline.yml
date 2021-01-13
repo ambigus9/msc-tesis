@@ -15,7 +15,7 @@ ruta_base: ../data/
 transfer_learning: classic
 restart_weights: True
 learning_rate: 1e-5
-modality: ultra
+modality: slow
 save_fig_path: plots/
 save_path_logs: logs/
 path_label_stats: stats/data_label_stats_
@@ -23,3 +23,4 @@ ssl_threshold: 0.90
 split_train_test: 5
 split_kfold: 4
 metrics: weighted
+cm_normalize: False
