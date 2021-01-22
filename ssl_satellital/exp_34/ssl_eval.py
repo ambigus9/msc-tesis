@@ -132,17 +132,24 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
 
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
     cm = calculate_confusion_matrix(y_true, y_pred)
-    plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
+    #plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
+
+    # normalize confusion matrix
+    if pipeline["cm_normalize"]:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = np.round(cm, 2)
     
-    acc_cls = accuracy_by_class(cm, [*labels])
-    print("ACCURACY BY CLASS")
-    print(acc_cls)
-    print("LEN ACCURACY BY CLASS")
-    print(len(acc_cls))
+    save_confusion_matrix(cm, pipeline)
+    
+    #acc_cls = accuracy_by_class(cm, [*labels])
+    #print("ACCURACY BY CLASS")
+    #print(acc_cls)
+    #print("LEN ACCURACY BY CLASS")
+    #print(len(acc_cls))
     # SAVE ACC_CLS
-    logs_accBycls = []
-    logs_accBycls.append([kfold,iteracion,architecture,acc_cls])
-    save_logs(logs_accBycls, 'accBycls', pipeline)
+    #logs_accBycls = []
+    #logs_accBycls.append([kfold,iteracion,architecture,acc_cls])
+    #save_logs(logs_accBycls, 'accBycls', pipeline)
 
     print(class_metrics)
     return class_metrics
