@@ -2,9 +2,10 @@
 
 import os
 import random
-#import traceback
+
 from utils_general import read_yaml
 from utils_general import reset_keras
+from utils_general import save_logs
 
 #loading global configuration
 pipeline = read_yaml('ssl_baseline.yml')
@@ -33,8 +34,6 @@ from utils_data import dividir_lotes
 from utils_data import split_train_test
 from utils_data import get_Fold
 
-from utils_general import save_logs
-
 from ssl_train import training
 from ssl_eval import evaluate_cotrain
 from ssl_eval import classification_metrics
@@ -42,7 +41,7 @@ from ssl_label import labeling
 from ssl_stats import label_stats
 
 # TO DO -> USE UNIVERSAL DICTS
-logs,logs_time,logs_label = [], [], []
+logs,logs_time,logs_label,logs_accBycls = [], [], [], []
 
 ## Preparar dataset
 def ssl_global(model_zoo, pipeline):
@@ -55,7 +54,9 @@ def ssl_global(model_zoo, pipeline):
     import time
     start = time.time()
 
-    for kfold in range(pipeline["split_kfold"]):
+    split_kfold = pipeline["split_kfold"]
+
+    for kfold in range(split_kfold):
 
         models_info = {}
         datos = get_Fold(kfold, datos, pipeline)
@@ -63,10 +64,13 @@ def ssl_global(model_zoo, pipeline):
         numero_lotes = len(datos["batch_set"])
 
         for iteracion in range(numero_lotes*1):
-
-            print("\n######################")
-            print(f"K-FOLD {kfold}/{pipeline["split_kfold"]} - ITERACION {iteracion}/{numero_lotes}")
-            print("######################\n")
+            
+            kfold_info = f"K-FOLD {kfold}/{split_kfold} - ITERACION {iteracion}/{numero_lotes}"
+            print("\n")
+            print("#"*len(kfold_info))
+            print(kfold_info)
+            print("#"*len(kfold_info))
+            print("\n")
             
             if iteracion == 0:
                 etapa = 'train'
@@ -174,10 +178,12 @@ logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
 "test_loss","test_accu","test_precision","test_recall","test_f1score","support"])
 logs_time.append(["kfold","iteracion","arquitectura","training_time"])
 logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
+logs_accBycls.append(["kfold","iteracion","arquitectura","accBycls"])
 
 save_logs(logs,'train',pipeline)
 save_logs(logs_time,'time',pipeline)
 save_logs(logs_label,'label',pipeline)
+save_logs(logs_accBycls,'accBycls',pipeline)
 
 # CREATING SCHEMA
 plot_accu = os.path.join(pipeline["save_fig_path"] , 'accu')

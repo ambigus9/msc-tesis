@@ -2,7 +2,9 @@ import os
 import gc
 import csv
 import yaml
+import numpy as np
 from tensorflow.keras.backend import clear_session
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 def read_yaml(yml_path):
@@ -19,7 +21,7 @@ def reset_keras():
 
 def plot_cm_seaborn(y_true, y_pred, labels, kfold, iteracion, architecture, pipeline):
 
-    from sklearn.metrics import confusion_matrix
+    #from sklearn.metrics import confusion_matrix
     import seaborn as sns
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -113,6 +115,15 @@ def plot_confusion_matrix(cm, labels, kfold, iteracion, architecture, pipeline):
     save_fig_cm = os.path.join(pipeline["save_fig_path"] , 'conf' , save_fig_name)
     print(save_fig_cm)
     fig.write_html(save_fig_cm)
+
+def save_confusion_matrix(cm, pipeline):
+    import numpy as np
+
+    ID = pipeline['id']
+    save_npy_name = f"exp_{ID:02d}_cm_{kfold:02d}_{iteracion:02d}_{architecture}.npy"
+    save_npy_cm = os.path.join(pipeline["save_npy_path"] , 'conf' , save_npy_name)
+    print(save_py_cm)
+    np.save(save_py_cm, cm)
 
 def save_plots(history, kfold, iteracion, architecture, pipeline):
     #os.makedirs(pipeline["save_fig_path"], exist_ok=True)

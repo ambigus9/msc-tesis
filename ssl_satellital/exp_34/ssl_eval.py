@@ -4,9 +4,11 @@ from ml_generators import generadores
 from utils_general import save_logs
 from utils_general import plot_confusion_matrix
 from utils_general import calculate_confusion_matrix
+from utils_general import save_confusion_matrix
+#from utils_general import accuracy_by_class
+
 
 from sklearn.metrics import precision_recall_fscore_support
-#from sklearn.metrics import confusion_matrix
 
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
@@ -45,10 +47,7 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     y_pred = results['predictions'].values.tolist()
 
     labels_arch1 = (train_generator_arch1.class_indices)
-    #labels2 = (train_generator_arch2.class_indices)
-    #labels3 = (train_generator_arch2.class_indices)
 
-    #if labels1 == labels2
     print("LABELS CO-TRAIN")
     print([*labels_arch1])
 
@@ -57,18 +56,29 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
     
     cm = calculate_confusion_matrix(y_true, y_pred)
-    plot_confusion_matrix(cm, labels, kfold, iteracion, architecture, pipeline)
-    acc_cls = accuracy_by_class(cm, [*labels_arch1])
-    print("ACCURACY BY CLASS")
-    print(acc_cls)
+
+    # normalize confusion matrix
+    if pipeline["cm_normalize"]:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = np.round(cm, 2)
+    
+    save_confusion_matrix(cm, pipeline)
+
+    #plot_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
+    #acc_cls = accuracy_by_class(cm, [*labels_arch1])
+    #print("ACCURACY BY CLASS")
+    #print(acc_cls)
+    #print("LEN ACCURACY BY CLASS")
+    #print(len(acc_cls))
     # SAVE ACC_CLS
+    #logs_accBycls = []
+    #logs_accBycls.append([kfold,iteracion,architecture,acc_cls])
+    #save_logs(logs_accBycls, 'accBycls', pipeline)
 
     #plot_confusion_matrix(y_true, y_pred, [*labels_arch1], kfold, iteracion, architecture, pipeline)
     
     from sklearn.metrics import accuracy_score
     co_train_accu = accuracy_score(y_true,y_pred)
-    #co_train_label = 'co-train'
-    #architecture = 'co-train'
 
     logs.append([kfold,iteracion,architecture,None,None,None,co_train_accu,
     class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
@@ -121,7 +131,18 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
     print([*labels])
 
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
-    plot_confusion_matrix(y_true, y_pred, [*labels], kfold, iteracion, architecture, pipeline)
+    cm = calculate_confusion_matrix(y_true, y_pred)
+    plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
     
+    acc_cls = accuracy_by_class(cm, [*labels])
+    print("ACCURACY BY CLASS")
+    print(acc_cls)
+    print("LEN ACCURACY BY CLASS")
+    print(len(acc_cls))
+    # SAVE ACC_CLS
+    logs_accBycls = []
+    logs_accBycls.append([kfold,iteracion,architecture,acc_cls])
+    save_logs(logs_accBycls, 'accBycls', pipeline)
+
     print(class_metrics)
     return class_metrics
