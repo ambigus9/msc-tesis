@@ -4,3 +4,7 @@ ssl_satellital/__pycache__
 ssl_satellital/plots/
 ssl_satellital/stats/
 ssl_satellital/logs/
+ssl_satellital/exp_*/results/*
+ssl_satellital/exp_34/
+ssl_satellital/exp_35/
+ssl_satellital/exp_36/

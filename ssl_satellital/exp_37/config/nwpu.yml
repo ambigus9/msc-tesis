@@ -1,0 +1,26 @@
+id : 37
+dataset: satellital
+dataset_base: NWPU-RESISC45
+weights: imagenet
+img_height: 256
+img_width: 256
+aug_factor: 2
+batch_size: 16
+batch_size_u: 5
+save_model: False
+x_col_name: image
+y_col_name: class
+ruta_base: /home/miguel/msc-tesis/ssl_satellital/data
+transfer_learning: classic
+restart_weights: True
+learning_rate: 1e-5
+modality: ultra
+save_path_fig: plots/
+save_path_logs: logs/
+save_path_results: results/
+save_path_stats: stats/
+ssl_threshold: 0.90
+split_train_test: 5
+split_kfold: 4
+metrics: weighted
+cm_normalize: True

@@ -33,3 +33,10 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 unzip nwpu_resisc45.zip
 rm -rv nwpu_resisc45.zip
 ```
+
+## How to use
+
+```
+python baseline.py --yml config/nwpu.yml --gpu 5
+python baseline.py --yml config/ucmerced.yml --gpu 5
+```
