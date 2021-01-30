@@ -1,4 +1,4 @@
-id : 73
+id : 75
 dataset: satellital
 dataset_base: ucmerced
 weights: imagenet
@@ -18,7 +18,7 @@ cm_normalize: True
 checkpoint: False
 restart_weights: True
 batch_size_u: 5
-batch_size: 16
+batch_size: 32
 img_height: 256
 img_width: 256
 transfer_learning: classic

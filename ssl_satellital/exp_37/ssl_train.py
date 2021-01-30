@@ -125,13 +125,16 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
         finetune_model = transfer_learning_soft( base_model, num_classes,
                                                  pipeline["stage_config"][iteracion] )
         print("OK - TRANSFER LEARNING - TRAIN + SOFT")    
+    
+    NUM_EPOCHS = pipeline["stage_config"][iteracion]["train_epochs"]
+    AUG_FACTOR = pipeline["stage_config"][iteracion]["aug_factor"]
 
     if etapa == 'train':
-        NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]
-        num_train_images = len(datos['df_train'])*pipeline["aug_factor"]
+        #NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]
+        num_train_images = len(datos['df_train'])*AUG_FACTOR
     if etapa == 'train_EL':
-        NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["batch_epochs"]
-        num_train_images = len(datos['df_train_EL'])*pipeline["aug_factor"]
+        #NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["batch_epochs"]
+        num_train_images = len(datos['df_train_EL'])*AUG_FACTOR
 
     STEP_SIZE_TRAIN=num_train_images//train_generator.batch_size
     STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
@@ -157,13 +160,16 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     finetune_model.compile(optimizer, loss=loss, metrics=metrics)
 
     if pipeline["early_stopping"]:
-        early = EarlyStopping(monitor='val_loss', min_delta=1e-3, patience=10, verbose=1, restore_best_weights=True)
+        early = EarlyStopping(monitor='val_loss', min_delta=1e-3, patience=6, verbose=1, restore_best_weights=True)        
         callbacks_finetune.append(early)
 
     if pipeline["reduce_lr"]:
-        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, mode='auto', min_delta=0.0001,
-                              cooldown=0, min_lr=float(LR))
+        print("USING REDUCE_LR")
+        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, mode='min')
         callbacks_finetune.append(reduce_lr_loss)
+        print(reduce_lr_loss)
+        print(callbacks_finetune)
+        print("OK - USING REDUCE_LR")
 
     if pipeline["checkpoint"]:
         #mod_filename = f'{kfold}_{architecture}_{iteracion}_'+'{epoch:02d}-{val_loss:.2f}.hdf5'
@@ -179,11 +185,17 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
         from sklearn.utils import class_weight
 
         class_weights = class_weight.compute_class_weight('balanced',
-                                                        np.unique(y_train_unique),
+                                                        y_train_unique,
                                                         df_y_train_unique)
+        print("USING CLASS WEIGHTING")
+        print(class_weights)
+        print("OK - CLASS WEIGHTING")
     else:
         class_weights = None
 
+    print("CALLBACKS FINETUNE")
+    print(callbacks_finetune)
+    print("OK - CALLBACKS FINETUNE")
 
     history = finetune_model.fit(train_generator,
                 epochs=NUM_EPOCHS,

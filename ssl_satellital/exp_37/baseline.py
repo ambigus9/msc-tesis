@@ -283,27 +283,32 @@ pipeline['stage_config'] = {
     0: {
         'LR': 1e-5,
         'layer_percent': 1,
-        'aug_factor': 5
+        'aug_factor': 5,
+        "train_epochs": 30,
     },
     1: {
         'LR': 1e-5,
         'layer_percent': 0.7,
-        'aug_factor': 5
+        'aug_factor': 5,
+        "train_epochs": 30,
     },
     2: {
         'LR': 1e-5,
         'layer_percent': 0.5,
-        'aug_factor': 5
+        'aug_factor': 5,
+        "train_epochs": 30,
     },
     3: {
         'LR': 1e-5,
         'layer_percent': 0.3,
-        'aug_factor': 5
+        'aug_factor': 5,
+        'train_epochs': 30,
     },
     4: {
         'LR': 1e-5,
         'layer_percent': 0.1,
-        'aug_factor': 5
+        'aug_factor': 5,
+        "train_epochs": 30,
     }
 }
 

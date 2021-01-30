@@ -11,15 +11,13 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, m
     if not pipeline["aug_stages"]:
         datagen = ImageDataGenerator(
                                         preprocessing_function=preprocess_function,
-                                        #rotation_range=360,
-                                        rotation_range=90,
-                                        #zoom_range=[0.1,0.5],
-                                        #brightness_range=[0.1,0.5],
-                                        #rescale=1./255,
-                                        #shear_range=0.2,
-                                        #fill_mode='nearest'
-                                        #width_shift_range=0.2,
-                                        #height_shift_range=0.2,
+                                        rotation_range=360,
+                                        zoom_range=[0.1,0.5],
+                                        brightness_range=[0.1,0.5],
+                                        shear_range=0.2,
+                                        fill_mode='nearest',
+                                        width_shift_range=0.2,
+                                        height_shift_range=0.2,
                                         horizontal_flip=True,
                                         vertical_flip=True,
                                     )

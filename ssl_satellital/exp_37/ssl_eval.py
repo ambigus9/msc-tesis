@@ -156,8 +156,8 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
 
     labels = (train_generator.class_indices)
 
-    print("LABELS")
-    print([*labels])
+    #print("LABELS")
+    #print([*labels])
 
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
     cm = calculate_confusion_matrix(y_true, y_pred)
@@ -182,5 +182,5 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
     #logs_accBycls.append([kfold,iteracion,architecture,acc_cls])
     #save_logs(logs_accBycls, 'accBycls', pipeline)
 
-    print(class_metrics)
+    #print(class_metrics)
     return class_metrics

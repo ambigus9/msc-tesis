@@ -94,7 +94,7 @@ def plot_confusion_matrix(cm, labels, kfold, iteracion, architecture, pipeline):
 
         save_fig_name = f"exp_{ID:02d}_cm_{kfold:02d}_{iteracion:02d}_{architecture}{file_format}"
         save_fig_cm = os.path.join(pipeline["save_path_fig"] , 'conf' , save_fig_name)
-        print(save_fig_cm)
+        #print(save_fig_cm)
         
         if file_format == '.html':
             # add title
