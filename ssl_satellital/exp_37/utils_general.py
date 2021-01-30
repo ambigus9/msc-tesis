@@ -4,6 +4,8 @@ import csv
 import yaml
 import numpy as np
 from tensorflow.keras.backend import clear_session
+from tensorflow.keras.backend import get_session
+
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
@@ -14,10 +16,25 @@ def read_yaml(yml_path):
         dataMap = yaml.safe_load(f)
     return dataMap
 
-def reset_keras():
+#def reset_keras():
+#    # Reset Keras Session
+#    clear_session()
+#    print(gc.collect())
+
+def reset_keras(pipeline):
     # Reset Keras Session
+    sess = get_session()
     clear_session()
+    sess.close()
+    sess = get_session()
+
+    print("GC COLLECT")
     print(gc.collect())
+    print("OK - GC COLLECT")
+
+    import os
+    os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID";
+    os.environ["CUDA_VISIBLE_DEVICES"]=str(pipeline["gpu"]);
 
 def plot_cm_seaborn(y_true, y_pred, labels, kfold, iteracion, architecture, pipeline):
 

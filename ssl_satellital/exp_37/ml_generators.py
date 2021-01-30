@@ -8,12 +8,45 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, m
 
     preprocess_function = get_preprocess_function(architecture)
 
-    datagen = ImageDataGenerator(
-                                    preprocessing_function=preprocess_function,
-                                    rotation_range=90,
-                                    horizontal_flip=True,
-                                    vertical_flip=True,
-                                )
+    if not pipeline["aug_stages"]:
+        datagen = ImageDataGenerator(
+                                        preprocessing_function=preprocess_function,
+                                        #rotation_range=360,
+                                        rotation_range=90,
+                                        #zoom_range=[0.1,0.5],
+                                        #brightness_range=[0.1,0.5],
+                                        #rescale=1./255,
+                                        #shear_range=0.2,
+                                        #fill_mode='nearest'
+                                        #width_shift_range=0.2,
+                                        #height_shift_range=0.2,
+                                        horizontal_flip=True,
+                                        vertical_flip=True,
+                                    )
+
+    if iteracion == 0 and pipeline["aug_stages"]:
+        datagen = ImageDataGenerator(
+                                        preprocessing_function=preprocess_function,
+                                        rotation_range=360,
+                                        horizontal_flip=True,
+                                        vertical_flip=True,
+                                    )
+    elif iteracion == 1 and pipeline["aug_stages"]:
+        datagen = ImageDataGenerator(
+                                        preprocessing_function=preprocess_function,
+                                        rotation_range=360,
+                                        zoom_range=[0.1,0.5],
+                                        horizontal_flip=True,
+                                        vertical_flip=True,
+                                    )
+    elif iteracion >= 2 and pipeline["aug_stages"]:
+        datagen = ImageDataGenerator(
+                                        preprocessing_function=preprocess_function,
+                                        rotation_range=360,
+                                        brightness_range=[0.1,0.5],
+                                        horizontal_flip=True,
+                                        vertical_flip=True,
+                                    )
 
     if etapa=='train':
         print("CREATING GENERATOR FOR TRAIN FROM GENERATORS")

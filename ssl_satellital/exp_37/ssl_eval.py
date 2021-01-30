@@ -23,28 +23,55 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     df2=evaluar(modelo2,train_generator_arch2,test_generator_arch2,STEP_SIZE_TEST_arch2)
     df3=evaluar(modelo3,train_generator_arch3,test_generator_arch3,STEP_SIZE_TEST_arch3)
 
+    import numpy as np
+
     predicciones = []
+    predicciones_logs = []
+
     for i in range(len(df1)):
 
         c1 = (df1['Predictions'][i] == df2['Predictions'][i])
         c2 = (df1['Predictions'][i] == df3['Predictions'][i])
+        c3 = (df2['Predictions'][i] == df3['Predictions'][i])
 
-        if c1 and c2:
+        if c1 or c2:
             predicciones.append([df1['Filename'][i],df1['Predictions'][i]])
+            selected = df1['Predictions'][i]
+            prob_selected = df1["Max_Probability"][i]
+            predicciones_logs.append([df1['Filename'][i],selected,prob_selected,"democ",
+                                    df1['Predictions'][i],df1['Max_Probability'][i],
+                                    df2["Predictions"][i],df2['Max_Probability'][i],
+                                    df3["Predictions"][i],df3['Max_Probability'][i]])
+        elif c3:
+            predicciones.append([df2['Filename'][i],df2['Predictions'][i]])
+            selected = df2['Predictions'][i]
+            prob_selected = df2["Max_Probability"][i]
+            predicciones_logs.append([df1['Filename'][i],selected,prob_selected,"democ",
+                                    df1['Predictions'][i],df1['Max_Probability'][i],
+                                    df2["Predictions"][i],df2['Max_Probability'][i],
+                                    df3["Predictions"][i],df3['Max_Probability'][i]])
         else:
             probabilidades = np.array([df1['Max_Probability'][i],df2['Max_Probability'][i],df3['Max_Probability'][i]])
             indice_prob_max = probabilidades.argmax()
 
             clases = np.array([df1['Predictions'][i],df2['Predictions'][i],df3['Predictions'][i]])
             real = np.array([df1['Filename'][i],df2['Filename'][i],df3['Filename'][i]])
-            
-            predicciones.append([real[indice_prob_max],clases[indice_prob_max]])
 
+            predicciones.append([real[indice_prob_max],clases[indice_prob_max]])
+            
+            selected = clases[indice_prob_max]
+            prob_selected = probabilidades[indice_prob_max]
+            predicciones_logs.append([df1['Filename'][i],selected,prob_selected,"max",
+                                    df1['Predictions'][i],df1['Max_Probability'][i],
+                                    df2["Predictions"][i],df2['Max_Probability'][i],
+                                    df3["Predictions"][i],df3['Max_Probability'][i]])
+            
     results = pd.DataFrame(predicciones,columns=["filename","predictions"])
 
     results['filename'] = results['filename'].apply(lambda x:x.split('/')[-2])
     y_true = results['filename'].values.tolist()
     y_pred = results['predictions'].values.tolist()
+
 
     labels_arch1 = (train_generator_arch1.class_indices)
 
@@ -80,6 +107,7 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     
     from sklearn.metrics import accuracy_score
     co_train_accu = accuracy_score(y_true,y_pred)
+    #co_train_accu = accuracy_score(y_pred, y_true)
 
     logs.append([kfold,iteracion,architecture,None,None,None,co_train_accu,
     class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
@@ -91,11 +119,11 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     print(f"Co-train Support: {class_metrics[3]}")
 
     save_logs(logs,'train',pipeline)
-    return co_train_accu
+    return co_train_accu, [df1,df2,df3]
 
 def evaluar(modelo, train_generator, test_generator, test_steps):
 
-    pred=modelo.predict(test_generator,steps=test_steps,verbose=0)
+    pred=modelo.predict(test_generator,steps=test_steps,verbose=1)
 
     predicted_class_indices=np.argmax(pred,axis=1)
     predicted_class_probab=np.max(pred,axis=1)

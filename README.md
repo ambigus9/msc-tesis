@@ -38,5 +38,8 @@ rm -rv nwpu_resisc45.zip
 
 ```
 python baseline.py --yml config/nwpu.yml --gpu 5
+
+docker exec -it miguel bash
+cd /home/miguel/msc-tesis/ssl_satellital/exp_37/
 python baseline.py --yml config/ucmerced.yml --gpu 5
 ```

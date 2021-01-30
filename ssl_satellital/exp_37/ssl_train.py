@@ -4,8 +4,11 @@ import os
 import time
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import RMSprop
+
+#from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
 #from ssl_eval import classification_metrics
 
@@ -16,7 +19,9 @@ from ml_strategy import transfer_learning_classic
 from ml_strategy import transfer_learning_soft
 
 def training(kfold, etapa, datos, architecture, iteracion, models_info, classification_metrics, pipeline):
-
+    
+    import time
+    callbacks_finetune = []
     start_model = time.time()
     base_model, preprocess_input = get_model(architecture, iteracion, models_info, pipeline)
     model_performance = {}
@@ -41,6 +46,13 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
                          shuffle=True)
         print("OK - CREATING GENERATOR FOR TRAIN FROM SSL_TRAIN")
 
+        print("CLASS DISTRIBUTION")
+        print( datos['df_train'].groupby(pipeline["y_col_name"]).count() )
+        print("OK - CLASS DISTRIBUTION")
+
+        y_train_unique = datos['df_train'][pipeline["y_col_name"]].unique()
+        df_y_train_unique = datos['df_train'][pipeline["y_col_name"]]
+
     if etapa=='train_EL':
         print("CREATING GENERATOR FOR TRAIN FROM SSL_TRAIN")
         train_generator = datagen.flow_from_dataframe(
@@ -53,6 +65,13 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
                          seed=42,
                          shuffle=True)
         print("OK - CREATING GENERATOR FOR TRAIN_EL FROM SSL_TRAIN")
+
+        print("CLASS DISTRIBUTION")
+        print( datos['df_train_EL'].groupby(pipeline["y_col_name"]).count() )
+        print("OK - CLASS DISTRIBUTION")
+
+        y_train_unique = datos['df_train_EL'][pipeline["y_col_name"]].unique()
+        df_y_train_unique = datos['df_train_EL'][pipeline["y_col_name"]]
 
     if len(datos['df_val']) > 0:
         print("CREATING GENERATOR FOR VAL FROM SSL_TRAIN")
@@ -90,12 +109,12 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     if pipeline["transfer_learning"] == "classic":
         if pipeline["restart_weights"]:
             print("TRANSFER LEARNING - CLASSIC + YES RESTART WEIGHTS")
-            finetune_model = transfer_learning_classic( base_model, num_classes )
+            finetune_model = transfer_learning_classic( base_model, num_classes , pipeline)
             print("OK - TRANSFER LEARNING - CLASSIC + YES RESTART WEIGHTS")
         else:
             if etapa == 'train':
                 print("TRANSFER LEARNING - TRAIN + CLASSIC")
-                finetune_model = transfer_learning_classic( base_model, num_classes )
+                finetune_model = transfer_learning_classic( base_model, num_classes , pipeline)
                 print("OK - TRANSFER LEARNING - TRAIN + CLASSIC")
             elif etapa == 'train_EL':
                 print("TRANSFER LEARNING - TRAIN_EL + CLASSIC + NO RESTART WEIGHTS")
@@ -126,15 +145,45 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     elif pipeline["transfer_learning"] == "soft":
         LR = pipeline["stage_config"][iteracion]['LR']
     
-    print(f"LEARNING RATE: {LR}")
-    adam = Adam(lr=float(LR))
-    finetune_model.compile(adam, loss=loss, metrics=metrics)
 
-    early = EarlyStopping(monitor='val_loss',
-                        min_delta=1e-3,
-                        patience=5,
-                        verbose=1,
-                        restore_best_weights=True)
+    #lr_schedule = ExponentialDecay(
+    #    initial_learning_rate=1e-2,
+    #    decay_steps=10000,
+    #    decay_rate=0.9)
+
+    #print(f"LEARNING RATE: {lr_schedule}")   
+    print(f"LEARNING RATE: {LR}")
+    optimizer = Adam(lr=float(LR))
+    finetune_model.compile(optimizer, loss=loss, metrics=metrics)
+
+    if pipeline["early_stopping"]:
+        early = EarlyStopping(monitor='val_loss', min_delta=1e-3, patience=10, verbose=1, restore_best_weights=True)
+        callbacks_finetune.append(early)
+
+    if pipeline["reduce_lr"]:
+        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, mode='auto', min_delta=0.0001,
+                              cooldown=0, min_lr=float(LR))
+        callbacks_finetune.append(reduce_lr_loss)
+
+    if pipeline["checkpoint"]:
+        #mod_filename = f'{kfold}_{architecture}_{iteracion}_'+'{epoch:02d}-{val_loss:.2f}.hdf5'
+        mod_filename = f'{kfold}_{architecture}_{iteracion}.h5'
+        mod_path = os.path.join( pipeline["save_path_models"] , mod_filename)
+        mcp_save = ModelCheckpoint(mod_path, save_best_only=True, monitor='val_loss', verbose=1, mode='auto', save_weights_only=False)
+        callbacks_finetune.append(mcp_save)
+    
+    if len(callbacks_finetune) == 0:
+        callbacks_finetune = None
+
+    if pipeline["class_weight"]:
+        from sklearn.utils import class_weight
+
+        class_weights = class_weight.compute_class_weight('balanced',
+                                                        np.unique(y_train_unique),
+                                                        df_y_train_unique)
+    else:
+        class_weights = None
+
 
     history = finetune_model.fit(train_generator,
                 epochs=NUM_EPOCHS,
@@ -143,7 +192,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
                 validation_data=valid_generator,
                 validation_steps=STEP_SIZE_VALID,
                 verbose=1,
-                callbacks=[early])
+                callbacks=callbacks_finetune,
+                class_weight=class_weights,
+                )
 
     val_score=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
     test_score=finetune_model.evaluate(test_generator,verbose=0,steps=STEP_SIZE_TEST)
@@ -165,6 +216,18 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     time_training = end_model - start_model
     print(f"training time of - {architecture}",time_training)
 
+    if pipeline["checkpoint"]:
+        from tensorflow.keras.models import load_model
+        print(f"LOADING BEST MODEL FROM {mod_path}")
+        model_checkpoint_finetune = load_model(mod_path, compile=True)
+
+        val_score = model_checkpoint_finetune.evaluate(valid_generator,verbose=1,steps=STEP_SIZE_VALID)
+        test_score = model_checkpoint_finetune.evaluate(test_generator,verbose=1,steps=STEP_SIZE_TEST)
+
+        print("Val  Accuracy from Best: ", val_score[1])
+        print("Test Accuracy from Best: ", test_score[1])
+
+
     logs = []
     logs.append([kfold,iteracion,architecture,val_score[0],val_score[1],
             test_score[0],test_score[1],class_metrics[0],class_metrics[1],
@@ -179,12 +242,30 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
 
     model_performance['val_acc'] = val_score[1]
     model_performance['test_acc'] = test_score[1]
+    
+    exp_id = str(pipeline["id"])
 
-    if pipeline['save_model']:
+    if pipeline['checkpoint']:
+        return model_checkpoint_finetune , model_performance
+
         save_path_model = os.path.join(
-            pipeline['save_path_model'],
-            f'{kfold}_{iteracion}_{architecture}.h5')
+            pipeline['save_path_model'], pipeline['dataset_base'], 
+            f'exp_{exp_id}_{kfold}_{iteracion}_{architecture}.h5')
+        # SAVE MODELS BEST_ONLY # MODEL CHECKPOINT
+        # https://stackoverflow.com/questions/48285129/saving-best-model-in-keras
+
+        import time
+        start = time.time()
+
+        print(f"SAVING MODEL ON {save_path_model}")
         finetune_model.save(save_path_model)
+        print(f"OK - SAVING MODEL ON {save_path_model}")
+
+        end = time.time()
+        end_time = end - start
+
+        print(f"TOTAL TIME TO SAVE: {end_time}")
+
         model_performance['val_acc'] = val_score[1]
         return save_path_model , model_performance
 

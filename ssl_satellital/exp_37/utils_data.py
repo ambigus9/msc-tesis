@@ -101,6 +101,9 @@ def get_Fold(kfold, datos, pipeline):
 
     df_U = pd.DataFrame([sub_fold[0][0],sub_fold[0][2]]).T
     df_U.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+
+    # Shuffle Unlabeled Samples
+    df_U = df_U.sample(frac=1).reset_index(drop=True)
     EL,LC = [],[]
 
     # saving csv data
@@ -112,6 +115,7 @@ def get_Fold(kfold, datos, pipeline):
     df_val.to_csv(save_csv_val,index=False)
     df_test.to_csv(save_csv_test,index=False)
 
+    print("\n")
     print("  train :", len(df_train))
     print("    val :", len(df_val))
     print("   test :", len(df_test))
