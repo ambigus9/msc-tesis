@@ -16,3 +16,4 @@ ssl_satellital/exp_37/notebooks/*.pdf
 ssl_satellital/exp_37/notebooks/*.svg
 ssl_satellital/exp_37/notebooks/*.html
 ssl_satellital/exp_37/notebooks/*-checkpoint.ipynb
+ssl_satellital/exp_37/notebooks/.ipynb_checkpoints

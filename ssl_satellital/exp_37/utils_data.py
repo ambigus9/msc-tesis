@@ -107,9 +107,9 @@ def get_Fold(kfold, datos, pipeline):
     EL,LC = [],[]
 
     # saving csv data
-    save_csv_train = os.path.join(pipeline["ruta_base"],f'exp_{pipeline["id"]}_kfold_{kfold}_train.csv')
-    save_csv_val = os.path.join(pipeline["ruta_base"],f'exp_{pipeline["id"]}_kfold_{kfold}_val.csv')
-    save_csv_test = os.path.join(pipeline["ruta_base"],f'exp_{pipeline["id"]}_kfold_{kfold}_test.csv')
+    save_csv_train = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_train.csv')
+    save_csv_val = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_val.csv')
+    save_csv_test = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_test.csv')
 
     df_train.to_csv(save_csv_train,index=False)
     df_val.to_csv(save_csv_val,index=False)

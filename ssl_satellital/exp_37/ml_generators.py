@@ -9,6 +9,7 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, m
     preprocess_function = get_preprocess_function(architecture)
 
     if not pipeline["aug_stages"]:
+        print("USING TRANSFORMATIONS FROM ML_GENERATORS")
         datagen = ImageDataGenerator(
                                         preprocessing_function=preprocess_function,
                                         rotation_range=360,
@@ -21,6 +22,8 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, m
                                         horizontal_flip=True,
                                         vertical_flip=True,
                                     )
+        print(datagen)
+        print("OK - USING TRANSFORMATIONS FROM ML_GENERATORS")
 
     if iteracion == 0 and pipeline["aug_stages"]:
         datagen = ImageDataGenerator(

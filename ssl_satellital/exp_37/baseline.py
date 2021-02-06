@@ -113,14 +113,15 @@ def ssl_global(model_zoo, pipeline):
             else:
                 etapa = 'train_EL'
 
-            print(pipeline["save_path_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'.pkl')
+            #print(pipeline["save_path_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'.pkl')
 
             for model in model_zoo:
                 
-                print("##########")
-                print("AUG_FACTOR - CURRENT: ", pipeline["stage_config"][iteracion]["aug_factor"])
-                pipeline["aug_factor"] = pipeline["stage_config"][iteracion]["aug_factor"]
-                print("AUG_FACTOR - NEW: ", pipeline["aug_factor"])
+                #print("##########")
+                #print("AUG_FACTOR - CURRENT: ", pipeline["stage_config"][iteracion]["aug_factor"])
+                #pipeline["aug_factor"] = pipeline["stage_config"][iteracion]["aug_factor"]
+                print("AUG_FACTOR: ", pipeline["aug_factor"])
+                
                 model_memory , model_performance = training(kfold,etapa,datos,model,iteracion,models_info,classification_metrics,pipeline)
 
                 models_info[model] = {
@@ -313,15 +314,18 @@ pipeline['stage_config'] = {
 }
 
 # UPDATE PIPELINE
+pipeline["save_path_results"] = os.path.join( pipeline["save_path_results"], f'exp_{pipeline["id"]}' )
+
 pipeline["save_path_fig"] = os.path.join( pipeline["save_path_results"], pipeline["dataset_base"], pipeline["save_path_fig"] )
 pipeline["save_path_stats"] = os.path.join( pipeline["save_path_results"], pipeline["dataset_base"], pipeline["save_path_stats"] )
 pipeline["save_path_logs"] = os.path.join( pipeline["save_path_results"], pipeline["dataset_base"], pipeline["save_path_logs"] )
 pipeline["save_path_models"] = os.path.join(pipeline["save_path_results"], pipeline["dataset_base"], pipeline["save_path_models"])
+pipeline["save_path_data"] = os.path.join(pipeline["save_path_results"], pipeline["dataset_base"] , pipeline["save_path_data"] )
 
 # GETTING GPU FROM ARGS
 pipeline["gpu"] = args.gpu
 
-print(pipeline)
+#print(pipeline)
 
 # CREATING SCHEMA
 plot_accu = os.path.join(pipeline["save_path_fig"], 'accu')
@@ -331,6 +335,7 @@ stats_conf = os.path.join(pipeline["save_path_stats"], 'conf')
 stats_label = os.path.join(pipeline["save_path_stats"], 'label')
 logs_path = pipeline["save_path_logs"]
 models_path = pipeline["save_path_models"]
+data_path = pipeline["save_path_data"]
 
 os.makedirs( stats_conf , exist_ok=True)
 os.makedirs( stats_label , exist_ok=True)
@@ -339,6 +344,7 @@ os.makedirs( plot_loss , exist_ok=True)
 os.makedirs( plot_conf , exist_ok=True)
 os.makedirs( logs_path , exist_ok=True)
 os.makedirs( models_path, exist_ok=True)
+os.makedirs( data_path, exist_ok=True)
 
 logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
 "test_loss","test_accu","test_precision","test_recall","test_f1score","support"])
