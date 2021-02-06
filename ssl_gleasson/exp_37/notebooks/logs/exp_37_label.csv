@@ -1,0 +1,17 @@
+kfold,iteracion,arquitectura,EL,LC
+0,0,ResNet152,InceptionV3,InceptionV4,92,116,0.9
+0,1,InceptionV3,ResNet152,InceptionV4,157,51,0.9
+0,2,ResNet152,InceptionV3,InceptionV4,132,76,0.9
+0,3,ResNet152,InceptionV3,InceptionV4,81,127,0.9
+0,4,InceptionV3,ResNet152,InceptionV4,98,110,0.9
+1,0,InceptionV4,ResNet152,InceptionV3,116,92,0.9
+1,1,ResNet152,InceptionV4,InceptionV3,162,46,0.9
+1,2,InceptionV3,InceptionV4,ResNet152,138,70,0.9
+1,3,InceptionV4,InceptionV3,ResNet152,158,50,0.9
+1,4,ResNet152,InceptionV3,InceptionV4,36,172,0.9
+2,0,ResNet152,InceptionV3,InceptionV4,79,129,0.9
+2,1,ResNet152,InceptionV3,InceptionV4,114,94,0.9
+2,2,ResNet152,InceptionV3,InceptionV4,125,83,0.9
+2,3,ResNet152,InceptionV3,InceptionV4,142,66,0.9
+2,4,ResNet152,InceptionV3,InceptionV4,62,146,0.9
+3,0,InceptionV4,ResNet152,InceptionV3,110,98,0.9
