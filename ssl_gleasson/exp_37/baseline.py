@@ -113,13 +113,8 @@ def ssl_global(model_zoo, pipeline):
             else:
                 etapa = 'train_EL'
 
-            #print(pipeline["save_path_stats"]+str(pipeline["id"])+'_'+str(iteracion)+'.pkl')
-
             for model in model_zoo:
                 
-                #print("##########")
-                #print("AUG_FACTOR - CURRENT: ", pipeline["stage_config"][iteracion]["aug_factor"])
-                #pipeline["aug_factor"] = pipeline["stage_config"][iteracion]["aug_factor"]
                 print("AUG_FACTOR: ", pipeline["aug_factor"])
                 
                 model_memory , model_performance = training(kfold,etapa,datos,model,iteracion,models_info,classification_metrics,pipeline)
@@ -137,21 +132,12 @@ def ssl_global(model_zoo, pipeline):
             mod_top2, arch_top2 = models_info[ top_models[1] ]['model_memory'] , top_models[1]
             mod_top3, arch_top3 = models_info[ top_models[2] ]['model_memory'] , top_models[2]
             
-            #if pipeline['save_model']:
-            #   mod_top1 = load_model(mod_top1, compile=True)
-            #    mod_top2 = load_model(mod_top2, compile=True)
-            #    mod_top3 = load_model(mod_top3, compile=True)
-                
-
             # Medir tiempo de ejecucion
             import time
             start = time.time()
 
             print("EVALUATING CO-TRAINING ...")
             print("\n")
-            #print("Co-train: ", evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
-            #                                        arch_top2,arch_top3,datos,etapa,kfold,
-            #                                        iteracion,pipeline,models_info,logs))
 
             cotrain_acc, cotrain_infer_dfs = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
                                                     arch_top2,arch_top3,datos,etapa,kfold,
@@ -168,7 +154,6 @@ def ssl_global(model_zoo, pipeline):
 
             cotrain_list.append(df_cotrain_info)
             df_cotrain_list = pd.DataFrame(cotrain_list)
-            #print(df_cotrain_list)
 
             infer_pkl = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_cotrain_eval.pkl'
             
@@ -181,8 +166,8 @@ def ssl_global(model_zoo, pipeline):
 
             end = time.time()
             infer_time = end - start
-            # SAVE INFER_TIME BY DF_TEST BY ITERATION AND ARCH
 
+            # SAVE INFER_TIME BY DF_TEST BY ITERATION AND ARCH
             print(infer_time, len(datos["df_test"]))
 
             logs_infer_time = []
@@ -213,7 +198,6 @@ def ssl_global(model_zoo, pipeline):
 
             label_list.append(df_label_info)
             df_label_list = pd.DataFrame(label_list)
-            #print(df_label_list)
 
             label_pkl = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_labeling.pkl'
             
@@ -232,7 +216,6 @@ def ssl_global(model_zoo, pipeline):
             df_LC.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_LC.pickle')
 
             df_label_stats = label_stats(df_EL, df_LC, pipeline)
-            #df_label_stats.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'.pickle')
 
             df_label_stats.to_pickle( pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_stats.pickle' )
             
@@ -246,13 +229,6 @@ def ssl_global(model_zoo, pipeline):
             save_logs(logs_label,'label',pipeline)
 
             reset_keras(pipeline)
-
-            #if pipeline["restart_weights"]:
-            #    reset_keras()
-
-                #random.seed(SEED)
-                #np.random.seed(SEED)
-                #tensorflow.random.set_random_seed(SEED)
 
     end = time.time()
     print(end - start)
@@ -325,8 +301,6 @@ pipeline["save_path_data"] = os.path.join(pipeline["save_path_results"], pipelin
 # GETTING GPU FROM ARGS
 pipeline["gpu"] = args.gpu
 
-#print(pipeline)
-
 # CREATING SCHEMA
 plot_accu = os.path.join(pipeline["save_path_fig"], 'accu')
 plot_loss = os.path.join(pipeline["save_path_fig"], 'loss')
@@ -357,9 +331,5 @@ save_logs(logs_time,'time', pipeline)
 save_logs(logs_label,'label', pipeline)
 save_logs(logs_infer_time,'infer_time', pipeline)
 
-#models = ['InceptionV4','ResNet152','InceptionV3',]
 models = ['ResNet152','InceptionV4','InceptionV3']
-#models = ['ResNet152']
-#models = ['InceptionV3']
-#models = ['InceptionV4']
 ssl_global(model_zoo=models, pipeline=pipeline)
