@@ -63,10 +63,15 @@ cotrain_list,label_list, datos_total = [], [], []
 ## Preparar dataset
 def ssl_global(model_zoo, pipeline):
 
-    datos = {}
-    datos["df_base"] = get_dataset(pipeline)
+    #datos = {}
+    datos = get_dataset(pipeline)
+
+    #print(datos)
+    #return True
+
     datos = split_train_test(datos, pipeline)
 
+    #return True
     # Medir tiempo de ejecucion
     import time
     start = time.time()
@@ -79,19 +84,19 @@ def ssl_global(model_zoo, pipeline):
         models_info = {}
         datos = get_Fold(kfold, datos, pipeline)
 
-        datos_by_fold = {
-            "kfold": kfold,
-            "datos": datos
-        }
+        #return True
 
-        datos_total.append(datos_by_fold)
-        df_datos = pd.DataFrame(datos_total)
-        datos_path = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(kfold)+'_data.pkl'
-        df_datos.to_pickle(datos_path)
+        #datos_by_fold = {
+        #    "kfold": kfold,
+        #    "datos": datos
+        #}
+
+        #datos_total.append(datos_by_fold)
+        #df_datos = pd.DataFrame(datos_total)
+        #datos_path = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(kfold)+'_data.pkl'
+        #df_datos.to_pickle(datos_path)
         
         numero_lotes = len(datos["batch_set"])
-
-        #datos["batch_set"][0]
 
         for iteracion in range(numero_lotes*1):
             
@@ -139,17 +144,31 @@ def ssl_global(model_zoo, pipeline):
             print("EVALUATING CO-TRAINING ...")
             print("\n")
 
-            cotrain_acc, cotrain_infer_dfs = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
+            cotrain_acc1, cotrain_infer_dfs1 = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
                                                     arch_top2,arch_top3,datos,etapa,kfold,
-                                                    iteracion,pipeline,models_info,logs)
+                                                    iteracion,pipeline,models_info,'patologo1',logs)
 
-            print("Co-train: ", cotrain_acc)
+            print("Co-train - Patologo 1: ", cotrain_acc1)
+
+            cotrain_acc2, cotrain_infer_dfs2 = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
+                                                    arch_top2,arch_top3,datos,etapa,kfold,
+                                                    iteracion,pipeline,models_info,'patologo2',logs)
+
+            print("Co-train - Patologo 2: ", cotrain_acc2)
+
             df_cotrain_info = {
                     "kfold": kfold,
                     "iteracion" : iteracion,
-                    "df_arch1" : cotrain_infer_dfs[0],
-                    "df_arch2" : cotrain_infer_dfs[1],
-                    "df_arch3" : cotrain_infer_dfs[2]
+                    "patologo1": {
+                        "df_arch1" : cotrain_infer_dfs1[0],
+                        "df_arch2" : cotrain_infer_dfs1[1],
+                        "df_arch3" : cotrain_infer_dfs1[2]
+                    },
+                    "patologo2": {
+                        "df_arch1" : cotrain_infer_dfs2[0],
+                        "df_arch2" : cotrain_infer_dfs2[1],
+                        "df_arch3" : cotrain_infer_dfs2[2]
+                    },
             }
 
             cotrain_list.append(df_cotrain_info)
@@ -168,10 +187,10 @@ def ssl_global(model_zoo, pipeline):
             infer_time = end - start
 
             # SAVE INFER_TIME BY DF_TEST BY ITERATION AND ARCH
-            print(infer_time, len(datos["df_test"]))
+            print(infer_time, len(datos["df_test1"]))
 
             logs_infer_time = []
-            logs_infer_time.append([kfold, iteracion, 'co-train', infer_time, len(datos["df_test"])])
+            logs_infer_time.append([kfold, iteracion, 'co-train1', infer_time, len(datos["df_test1"])])
             save_logs(logs_infer_time, 'infer_time', pipeline)
 
             print(f"GETTING BATCH_SET OF ITERATION {iteracion}...")
@@ -216,7 +235,6 @@ def ssl_global(model_zoo, pipeline):
             df_LC.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_LC.pickle')
 
             df_label_stats = label_stats(df_EL, df_LC, pipeline)
-
             df_label_stats.to_pickle( pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_stats.pickle' )
             
 
@@ -321,7 +339,8 @@ os.makedirs( models_path, exist_ok=True)
 os.makedirs( data_path, exist_ok=True)
 
 logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
-"test_loss","test_accu","test_precision","test_recall","test_f1score","support"])
+"test1_loss","test1_accu","test1_precision","test1_recall","test1_f1score",
+"test2_loss","test2_accu","test2_precision","test2_recall","test2_f1score"])
 logs_time.append(["kfold","iteracion","arquitectura","training_time"])
 logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
 logs_infer_time.append(["kfold","iteracion","arquitectura","infer_time","num_test_samples"])
@@ -331,5 +350,6 @@ save_logs(logs_time,'time', pipeline)
 save_logs(logs_label,'label', pipeline)
 save_logs(logs_infer_time,'infer_time', pipeline)
 
-models = ['ResNet152','InceptionV4','InceptionV3']
+#models = ['ResNet152','InceptionV4','InceptionV3']
+models = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
 ssl_global(model_zoo=models, pipeline=pipeline)

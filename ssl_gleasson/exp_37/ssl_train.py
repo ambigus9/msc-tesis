@@ -29,15 +29,15 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     print("USING TRANSFORMATIONS FROM SSL_TRAIN")
     datagen = ImageDataGenerator(
                                     preprocessing_function=preprocess_input,
-                                    rotation_range=90,
-                                    #zoom_range=[0.1,0.2],
-                                    #brightness_range=[0.1,0.5],
-                                    #shear_range=0.2,
-                                    #fill_mode='nearest',
-                                    #width_shift_range=0.2,
-                                    #height_shift_range=0.2,
+                                    rotation_range=40,
+                                    width_shift_range=0.1,
+                                    height_shift_range=0.1,
+                                    shear_range=0.01,
+                                    zoom_range=[0.9, 1.25],
                                     horizontal_flip=True,
-                                    vertical_flip=True,
+                                    vertical_flip=False,
+                                    fill_mode='reflect',
+                                    #data_format='channels_last'
                                 )
     print("OK - USING TRANSFORMATIONS FROM SSL_TRAIN")
 
@@ -60,6 +60,12 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
 
         y_train_unique = datos['df_train'][pipeline["y_col_name"]].unique()
         df_y_train_unique = datos['df_train'][pipeline["y_col_name"]]
+
+        print("CLASS Y_TRAIN UNIQUE")
+        print(y_train_unique)
+        print("OK - CLASS Y_TRAIN UNIQUE")
+
+
 
     if etapa=='train_EL':
         print("CREATING GENERATOR FOR TRAIN FROM SSL_TRAIN")
@@ -100,15 +106,26 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     print("CREATING GENERATOR FOR TEST FROM SSL_TRAIN")
     test_datagen=ImageDataGenerator(preprocessing_function=preprocess_input)
 
-    test_generator=test_datagen.flow_from_dataframe(
-                      dataframe=datos['df_test'],
-                      x_col=pipeline["x_col_name"],
-                      y_col=pipeline["y_col_name"],
+    test_generator1=test_datagen.flow_from_dataframe(
+                      dataframe=datos['df_test1'],
+                      x_col=pipeline["x_col_name"]+'1',
+                      y_col=pipeline["y_col_name"]+'1',
                       batch_size=pipeline["batch_size"],
                       seed=42,
                       shuffle=False,
                       class_mode="categorical",
                       target_size=(pipeline['img_height'],pipeline['img_width']))
+
+    test_generator2=test_datagen.flow_from_dataframe(
+                      dataframe=datos['df_test2'],
+                      x_col=pipeline["x_col_name"]+'2',
+                      y_col=pipeline["y_col_name"]+'2',
+                      batch_size=pipeline["batch_size"],
+                      seed=42,
+                      shuffle=False,
+                      class_mode="categorical",
+                      target_size=(pipeline['img_height'],pipeline['img_width']))
+    
     print("OK - CREATING GENERATOR FOR TEST FROM SSL_TRAIN")
 
     num_classes = len( datos["df_train"][ pipeline["y_col_name"] ].unique() )
@@ -153,7 +170,8 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
 
     STEP_SIZE_TRAIN=num_train_images//train_generator.batch_size
     STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
-    STEP_SIZE_TEST=test_generator.n//test_generator.batch_size
+    STEP_SIZE_TEST1=test_generator1.n//test_generator1.batch_size
+    STEP_SIZE_TEST2=test_generator2.n//test_generator2.batch_size
 
     metrics = ['accuracy']
     loss='categorical_crossentropy'
@@ -163,7 +181,6 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     elif pipeline["transfer_learning"] == "soft":
         LR = pipeline["stage_config"][iteracion]['LR']
     
-
     #lr_schedule = ExponentialDecay(
     #    initial_learning_rate=1e-2,
     #    decay_steps=10000,
@@ -175,12 +192,12 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     finetune_model.compile(optimizer, loss=loss, metrics=metrics)
 
     if pipeline["early_stopping"]:
-        early = EarlyStopping(monitor='val_loss', min_delta=1e-3, patience=6, verbose=1, restore_best_weights=True)        
+        early = EarlyStopping(monitor='val_loss', min_delta=1e-3, patience=pipeline["early_stopping_patience"], verbose=1, restore_best_weights=True)        
         callbacks_finetune.append(early)
 
     if pipeline["reduce_lr"]:
         print("USING REDUCE_LR")
-        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, mode='min')
+        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=pipeline["reduce_lr_patience"], verbose=1, mode='min')
         callbacks_finetune.append(reduce_lr_loss)
         print(reduce_lr_loss)
         print(callbacks_finetune)
@@ -197,11 +214,16 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
         callbacks_finetune = None
 
     if pipeline["class_weight"]:
+        import numpy as np
         from sklearn.utils import class_weight
 
+
+
+        print("CALCULATING CLASS_WEIGHTS")
         class_weights = class_weight.compute_class_weight('balanced',
-                                                        y_train_unique,
-                                                        df_y_train_unique)
+                                                        np.unique(train_generator.classes),
+                                                        train_generator.classes)
+        print("OK - CALCULATING CLASS_WEIGHTS")
         print("USING CLASS WEIGHTING")
         print(class_weights)
         print("OK - CLASS WEIGHTING")
@@ -224,20 +246,31 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
                 )
 
     val_score=finetune_model.evaluate(valid_generator,verbose=0,steps=STEP_SIZE_VALID)
-    test_score=finetune_model.evaluate(test_generator,verbose=0,steps=STEP_SIZE_TEST)
+    test1_score=finetune_model.evaluate(test_generator1,verbose=0,steps=STEP_SIZE_TEST1)
+    test2_score=finetune_model.evaluate(test_generator2,verbose=0,steps=STEP_SIZE_TEST2)
 
-    class_metrics = classification_metrics(finetune_model, train_generator, test_generator, STEP_SIZE_TEST,
+    class_metrics1 = classification_metrics(finetune_model, train_generator, test_generator1, STEP_SIZE_TEST1,
+                                            kfold, iteracion, architecture, pipeline)
+
+    class_metrics2 = classification_metrics(finetune_model, train_generator, test_generator2, STEP_SIZE_TEST2,
                                             kfold, iteracion, architecture, pipeline)
 
     print("Val  Loss : ", val_score[0])
-    print("Test Loss : ", test_score[0])
+    print("Test1 Loss : ", test1_score[0])
+    print("Test2 Loss : ", test2_score[0])
     print("Val  Accuracy : ", val_score[1])
-    print("Test Accuracy : ", test_score[1])
+    print("Test1 Accuracy : ", test1_score[1])
+    print("Test2 Accuracy : ", test2_score[1])
 
-    print(f"Test Precision: {class_metrics[0]}")
-    print(f"Test Recall: {class_metrics[1]}")
-    print(f"Test F1-Score: {class_metrics[2]}")
-    print(f"Test Support: {class_metrics[3]}")
+    print(f"Test1 Precision: {class_metrics1[0]}")
+    print(f"Test1 Recall: {class_metrics1[1]}")
+    print(f"Test1 F1-Score: {class_metrics1[2]}")
+    print(f"Test1 Support: {class_metrics1[3]}")
+
+    print(f"Test2 Precision: {class_metrics2[0]}")
+    print(f"Test2 Recall: {class_metrics2[1]}")
+    print(f"Test2 F1-Score: {class_metrics2[2]}")
+    print(f"Test2 Support: {class_metrics2[3]}")
 
     end_model = time.time()
     time_training = end_model - start_model
@@ -256,9 +289,15 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
 
 
     logs = []
-    logs.append([kfold,iteracion,architecture,val_score[0],val_score[1],
-            test_score[0],test_score[1],class_metrics[0],class_metrics[1],
-            class_metrics[2],class_metrics[3]])
+    logs.append([
+            kfold,iteracion,architecture,
+            val_score[0],val_score[1],
+            test1_score[0],test1_score[1],            
+            class_metrics1[0],class_metrics1[1],
+            class_metrics1[2],
+            test2_score[0],test2_score[1],
+            class_metrics2[0],class_metrics2[1],
+            class_metrics2[2]])
 
     logs_time = []
     logs_time.append([kfold,iteracion,architecture,time_training])
@@ -268,7 +307,8 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     save_plots(history, kfold, iteracion, architecture, pipeline)
 
     model_performance['val_acc'] = val_score[1]
-    model_performance['test_acc'] = test_score[1]
+    model_performance['test1_acc'] = test1_score[1]
+    model_performance['test2_acc'] = test2_score[1]
     
     exp_id = str(pipeline["id"])
 

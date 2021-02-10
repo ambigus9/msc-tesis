@@ -20,14 +20,14 @@ def label_stats(df_EL, df_LC, pipeline):
 
     if len(df_EL) > 0:
         df_EL_stats = estimate_stats_scores(df_EL)
-        df_EL["gth"] = df_EL[pipeline["x_col_name"]].apply(lambda x:x.split('/')[-2])
+        df_EL["gth"] = df_EL[pipeline["x_col_name"]].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
         df_EL_TP = df_EL[ ( df_EL[pipeline["y_col_name"]] == df_EL["gth"] ) ]
         df_EL_stats_TP = estimate_stats_scores(df_EL_TP)
         labeling_stats["df_EL_stats"] = df_EL_stats
         labeling_stats["df_EL_stats_TP"] = df_EL_stats_TP
     if len(df_LC) > 0:
         df_LC_stats = estimate_stats_scores(df_LC)
-        df_LC["gth"] = df_LC[pipeline["x_col_name"]].apply(lambda x:x.split('/')[-2])
+        df_LC["gth"] = df_LC[pipeline["x_col_name"]].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
         df_LC_TP = df_LC[ ( df_LC[pipeline["y_col_name"]] == df_LC["gth"] ) ]
         df_LC_stats_TP = estimate_stats_scores(df_LC_TP)
         labeling_stats["df_LC_stats"] = df_LC_stats

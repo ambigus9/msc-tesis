@@ -36,9 +36,9 @@ def labeling(etapa, modelo1, modelo2, modelo3, arquitectura1, arquitectura2, arq
     predicciones = []
     predicciones_logs = []
 
-    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa, arquitectura1, datos, pipeline, True, iteracion, models_info)
-    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa, arquitectura2, datos, pipeline, True, iteracion, models_info)
-    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa, arquitectura3, datos, pipeline, True, iteracion, models_info)
+    train_generator_arch1,batchset_generator_arch1,STEP_SIZE_BATCH_arch1=generadores(etapa, arquitectura1, datos, pipeline, True, iteracion, None, models_info)
+    train_generator_arch2,batchset_generator_arch2,STEP_SIZE_BATCH_arch2=generadores(etapa, arquitectura2, datos, pipeline, True, iteracion, None, models_info)
+    train_generator_arch3,batchset_generator_arch3,STEP_SIZE_BATCH_arch3=generadores(etapa, arquitectura3, datos, pipeline, True, iteracion, None, models_info)
 
     df1 = evaluar(modelo1,train_generator_arch1, batchset_generator_arch1, STEP_SIZE_BATCH_arch1)
     df2 = evaluar(modelo2,train_generator_arch2, batchset_generator_arch2, STEP_SIZE_BATCH_arch2)
@@ -89,7 +89,7 @@ def labeling(etapa, modelo1, modelo2, modelo3, arquitectura1, arquitectura2, arq
     df_logs = pd.DataFrame(predicciones_logs,
                 columns=["y_true","y_pred","prob_pred","type","pred1","prob1","pred2","prob2","pred3","prob3"])
 
-    df_logs["y_true"] = df_logs['y_true'].apply(lambda x:x.split('/')[-2])
+    df_logs["y_true"] = df_logs['y_true'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
 
     print("LABELING LOGS")
 
@@ -198,7 +198,7 @@ def labeling_v2(etapa, modelo1, modelo2, modelo3, arquitectura1, arquitectura2, 
     df_logs = pd.DataFrame(predicciones_logs,
                 columns=["y_true","y_pred","prob_pred","type","pred1","prob1","pred2","prob2","pred3","prob3"])
 
-    df_logs["y_true"] = df_logs['y_true'].apply(lambda x:x.split('/')[-2])
+    df_logs["y_true"] = df_logs['y_true'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
 
     print("LABELING LOGS")
 

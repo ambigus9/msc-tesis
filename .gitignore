@@ -17,3 +17,6 @@ ssl_satellital/exp_37/notebooks/*.svg
 ssl_satellital/exp_37/notebooks/*.html
 ssl_satellital/exp_37/notebooks/*-checkpoint.ipynb
 ssl_satellital/exp_37/notebooks/.ipynb_checkpoints
+ssl_gleasson/data/
+ssl_gleasson/exp_37/results/exp_78/*
+ssl_gleasson/exp_37/results/exp_79/*

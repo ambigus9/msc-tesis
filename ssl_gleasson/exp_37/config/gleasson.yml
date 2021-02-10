@@ -1,6 +1,6 @@
-id : 77
-dataset: satellital
-dataset_base: AID
+id : 79
+dataset: gleasson
+dataset_base: hardvard
 weights: imagenet
 train_epochs: 30
 learning_rate: 1e-5
@@ -10,22 +10,25 @@ split_train_test: 5
 split_kfold: 4
 num_kfold: 4
 early_stopping: True
+early_stopping_patience: 8
 reduce_lr: False
+reduce_lr_patience: 4
 aug_stages: False
 class_weight: False
 use_stage_config: False
+balance_downsampling: True
 cm_normalize: True
 checkpoint: False
 restart_weights: True
 batch_size_u: 5
 batch_size: 32
-img_height: 256
-img_width: 256
+img_height: 299
+img_width: 299
 transfer_learning: classic
-x_col_name: image
-y_col_name: class
+x_col_name: patch_name
+y_col_name: grade_
 metrics: weighted
-ruta_base: /home/miguel/msc-tesis/ssl_satellital/data
+ruta_base: /home/miguel/msc-tesis/ssl_gleasson/data
 save_path_fig: plots/
 save_path_logs: logs/
 save_path_results: results/

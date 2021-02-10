@@ -13,11 +13,11 @@ from sklearn.metrics import precision_recall_fscore_support
 def evaluate_cotrain(modelo1,modelo2,modelo3,
                     arquitectura1,arquitectura2,arquitectura3,
                     datos, etapa, kfold, iteracion,
-                    pipeline, models_info, logs):
+                    pipeline, models_info, patologo, logs):
 
-    train_generator_arch1,test_generator_arch1,STEP_SIZE_TEST_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,iteracion,models_info)
-    train_generator_arch2,test_generator_arch2,STEP_SIZE_TEST_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,iteracion,models_info)
-    train_generator_arch3,test_generator_arch3,STEP_SIZE_TEST_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,iteracion,models_info)
+    train_generator_arch1,test_generator_arch1,STEP_SIZE_TEST_arch1=generadores(etapa,arquitectura1,datos,pipeline,False,iteracion,patologo,models_info)
+    train_generator_arch2,test_generator_arch2,STEP_SIZE_TEST_arch2=generadores(etapa,arquitectura2,datos,pipeline,False,iteracion,patologo,models_info)
+    train_generator_arch3,test_generator_arch3,STEP_SIZE_TEST_arch3=generadores(etapa,arquitectura3,datos,pipeline,False,iteracion,patologo,models_info)
 
     df1=evaluar(modelo1,train_generator_arch1,test_generator_arch1,STEP_SIZE_TEST_arch1)
     df2=evaluar(modelo2,train_generator_arch2,test_generator_arch2,STEP_SIZE_TEST_arch2)
@@ -68,7 +68,7 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
             
     results = pd.DataFrame(predicciones,columns=["filename","predictions"])
 
-    results['filename'] = results['filename'].apply(lambda x:x.split('/')[-2])
+    results['filename'] = results['filename'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
     y_true = results['filename'].values.tolist()
     y_pred = results['predictions'].values.tolist()
 
@@ -78,7 +78,10 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     print("LABELS CO-TRAIN")
     print([*labels_arch1])
 
-    architecture = 'co-train'
+    if patologo == 'patologo1':
+        architecture = 'co-train1'
+    if patologo == 'patologo2':
+        architecture = 'co-train2'
 
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
     
@@ -109,8 +112,13 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
     co_train_accu = accuracy_score(y_true,y_pred)
     #co_train_accu = accuracy_score(y_pred, y_true)
 
-    logs.append([kfold,iteracion,architecture,None,None,None,co_train_accu,
-    class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
+    if patologo == 'patologo1':
+        logs.append([kfold,iteracion,architecture,None,None,None,co_train_accu,
+        class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
+    if patologo == 'patologo2':
+        logs.append([kfold,iteracion,architecture,None,None,None,co_train_accu,
+        class_metrics[0],class_metrics[1],class_metrics[2],class_metrics[3]])
+
 
     print(f"Co-train Accuracy: {co_train_accu}")
     print(f"Co-train Precision: {class_metrics[0]}")
@@ -150,7 +158,7 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
 
     df_pred = evaluar(model, train_generator, test_generator, test_steps)
 
-    prediction_names = df_pred['Filename'].apply(lambda x:x.split('/')[-2])
+    prediction_names = df_pred['Filename'].apply(lambda x:x.split('/')[-1].split('_')[-1][0])
     y_true = prediction_names.values.tolist()
     y_pred = df_pred['Predictions'].values.tolist()
 
