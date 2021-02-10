@@ -105,8 +105,19 @@ def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, p
         print("LABEL ACTIVE FROM GENERATORS ...")
         batchset_datagen = ImageDataGenerator(preprocessing_function=preprocess_function)
 
+        if len(datos["LC"]) > 0:
+            U_set = pd.DataFrame(datos["LC"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
+            print("LABELING LOW CONFIDENCE SAMPLES (LC)")
+            print( U_set.groupby(pipeline["y_col_name"]).count() )
+            print("OK - LABELING LOW CONFIDENCE SAMPLES (LC)")
+        else:
+            U_set = datos['U']
+            print("LABELING UNLABELED SAMPLES (U)")
+            print( U_set.groupby(pipeline["y_col_name"]).count() )
+            print("OK - LABELING UNLABELED SAMPLES (U)")
+
         batchset_generator=batchset_datagen.flow_from_dataframe(
-                      dataframe=datos['df_batchset'],
+                      dataframe=U_set,
                       x_col=pipeline["x_col_name"],
                       y_col=pipeline["y_col_name"],
                       batch_size=pipeline["batch_size"],

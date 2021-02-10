@@ -30,7 +30,7 @@ def transfer_learning_soft(base_model, num_clases, pipeline):
         #x = Dense(512, activation='relu')(x) # INCEPTIONV4
         x = Dense(256, activation='relu')(x) # INCEPTIONV4
         #x = Dense(512, activation='relu')(x) # INCEPTIONV4
-        x = Dropout(0.3)(x) # INCEPTIONV4
+        x = Dropout(0.3, seed=pipeline["seed_value"])(x)
         #x = Dense(256, activation='relu')(x) # RESNET152
         #x = Dropout(0.5)(x) # RESNET152
         predictions = Dense(num_clases, activation='softmax')(x)

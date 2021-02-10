@@ -211,6 +211,7 @@ def get_Fold(kfold, datos, pipeline):
     datos["batch_set"] = batch_set
     datos["EL"] = EL
     datos["LC"] = LC
+    datos["U"] = df_U
 
     return datos
 

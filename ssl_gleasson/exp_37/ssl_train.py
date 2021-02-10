@@ -349,6 +349,30 @@ def get_preprocess_function(architecture):
     if architecture == 'ResNet152':
         from tensorflow.keras.applications.resnet import preprocess_input
 
+    if architecture == 'ResNet50':
+        from tensorflow.keras.applications.resnet import ResNet50, preprocess_input
+
+    if architecture == 'ResNet101':
+        from tensorflow.keras.applications.resnet import ResNet101, preprocess_input
+    
+    if architecture == 'ResNet152':
+        from tensorflow.keras.applications.resnet import ResNet152, preprocess_input
+
+    if architecture == 'DenseNet121':
+        from tensorflow.keras.applications.densenet import DenseNet121, preprocess_input
+
+    if architecture == 'DenseNet169':
+        from tensorflow.keras.applications.densenet import DenseNet169, preprocess_input
+
+    if architecture == 'DenseNet201': 
+        from tensorflow.keras.applications.densenet import DenseNet201, preprocess_input
+
+    if architecture == 'NASNetLarge': 
+        from tensorflow.keras.applications.nasnet import NASNetLarge, preprocess_input
+
+    if architecture == 'Xception':
+        from tensorflow.keras.applications.xception import Xception, preprocess_input
+
     return preprocess_input
 
 def get_model(architecture, iteracion, models_info, pipeline):

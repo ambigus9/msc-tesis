@@ -1,8 +1,8 @@
-id : 79
+id : 81
 dataset: gleasson
 dataset_base: hardvard
 weights: imagenet
-train_epochs: 30
+train_epochs: 5
 learning_rate: 1e-5
 aug_factor: 2
 ssl_threshold: 0.90

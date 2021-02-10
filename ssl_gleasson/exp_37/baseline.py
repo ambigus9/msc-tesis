@@ -195,15 +195,15 @@ def ssl_global(model_zoo, pipeline):
 
             print(f"GETTING BATCH_SET OF ITERATION {iteracion}...")
 
-            df_batchset = datos["batch_set"][iteracion]
-            df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
-            df_batchset[pipeline["y_col_name"]] = '0'
+            #df_batchset = datos["batch_set"][iteracion]
+            #df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+            #df_batchset[pipeline["y_col_name"]] = '0'
 
-            datos['df_batchset'] = df_batchset
+            #datos['df_batchset'] = df_batchset
 
             print("LABELING ...")
 
-            datos, EL_iter, LC_iter , label_infer_df= labeling(etapa, mod_top1, mod_top2, mod_top3, 
+            datos, EL_iter, LC_iter , label_infer_df = labeling(etapa, mod_top1, mod_top2, mod_top3, 
                                                 arch_top1, arch_top2, arch_top3, 
                                                 datos, pipeline, iteracion, models_info)
 
