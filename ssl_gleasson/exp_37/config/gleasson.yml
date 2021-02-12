@@ -1,12 +1,12 @@
-id : 81
+id : 89
 dataset: gleasson
 dataset_base: hardvard
 weights: imagenet
-train_epochs: 5
+train_epochs: 3
 learning_rate: 1e-5
 aug_factor: 2
 ssl_threshold: 0.90
-split_train_test: 5
+split_train_test: 4
 split_kfold: 4
 num_kfold: 4
 early_stopping: True
@@ -21,9 +21,12 @@ cm_normalize: True
 checkpoint: False
 restart_weights: True
 batch_size_u: 5
-batch_size: 32
+batch_size: 16
 img_height: 299
 img_width: 299
+labeling_method: decision
+labeling_stages: 5
+grades: 1+2
 transfer_learning: classic
 x_col_name: patch_name
 y_col_name: grade_

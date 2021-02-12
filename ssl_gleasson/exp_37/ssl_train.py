@@ -54,9 +54,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
                          shuffle=True)
         print("OK - CREATING GENERATOR FOR TRAIN FROM SSL_TRAIN")
 
-        print("CLASS DISTRIBUTION")
+        print("CLASS DISTRIBUTION - TRAIN INIT")
         print( datos['df_train'].groupby(pipeline["y_col_name"]).count() )
-        print("OK - CLASS DISTRIBUTION")
+        print("OK - CLASS DISTRIBUTION - TRAIN INIT")
 
         y_train_unique = datos['df_train'][pipeline["y_col_name"]].unique()
         df_y_train_unique = datos['df_train'][pipeline["y_col_name"]]
@@ -80,9 +80,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
                          shuffle=True)
         print("OK - CREATING GENERATOR FOR TRAIN_EL FROM SSL_TRAIN")
 
-        print("CLASS DISTRIBUTION")
+        print("CLASS DISTRIBUTION - TRAIN EL")
         print( datos['df_train_EL'].groupby(pipeline["y_col_name"]).count() )
-        print("OK - CLASS DISTRIBUTION")
+        print("OK - CLASS DISTRIBUTION - TRAIN INIT")
 
         y_train_unique = datos['df_train_EL'][pipeline["y_col_name"]].unique()
         df_y_train_unique = datos['df_train_EL'][pipeline["y_col_name"]]
@@ -217,12 +217,16 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
         import numpy as np
         from sklearn.utils import class_weight
 
-
-
         print("CALCULATING CLASS_WEIGHTS")
-        class_weights = class_weight.compute_class_weight('balanced',
-                                                        np.unique(train_generator.classes),
-                                                        train_generator.classes)
+
+        if etapa == 'train':
+            class_weights = calculate_weights(datos['df_train'])
+        if etapa == 'train_EL':
+            class_weights = calculate_weights(datos['df_train_EL'])
+
+        #class_weights = class_weight.compute_class_weight('balanced',
+        #                                                np.unique(train_generator.classes),
+        #                                                train_generator.classes)
         print("OK - CALCULATING CLASS_WEIGHTS")
         print("USING CLASS WEIGHTING")
         print(class_weights)

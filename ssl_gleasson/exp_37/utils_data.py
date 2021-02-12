@@ -42,12 +42,15 @@ def get_dataset(pipeline):
     df_val = load_csv_gleasson(["ZT76"], pipeline)
     
     # unión de patches de train y validación
-    df_train = pd.concat([df_train, df_val]).reset_index().drop('index',axis=1)
+    # df_train = pd.concat([df_train, df_val]).reset_index().drop('index',axis=1)
+    
     if pipeline["balance_downsampling"]:
         df_train = balancear_downsampling(df_train, pipeline).copy()
 
     # Only grades 1 and 2
-    df_train = df_train[(df_train[pipeline["y_col_name"]] != '0') & (df_train[pipeline["y_col_name"]] != '3')]
+    if pipeline["grades"] == "1+2":
+        df_train = df_train[(df_train[pipeline["y_col_name"]] != '0') & (df_train[pipeline["y_col_name"]] != '3')]
+        df_val = df_val[(df_val[pipeline["y_col_name"]] != '0') & (df_val[pipeline["y_col_name"]] != '3')]
 
     # patches de test1 y test2
     csv_path = os.path.join( csvs , "ZT80_pgleason_scores.csv" )
@@ -56,7 +59,8 @@ def get_dataset(pipeline):
     df_test['patch_name2'] = df_test['patch_name2'].apply(lambda x:x.replace('/content/gdrive/My Drive/gleason_CNN-master/dataset', ruta_base))
 
     # Only grades 1 and 2
-    df_test = df_test[(df_test['grade_1'] != '0') & (df_test['grade_1'] != '3') & (df_test['grade_2'] != '0') & (df_test['grade_2'] != '3')].copy()
+    if pipeline["grades"] == "1+2":
+        df_test = df_test[(df_test['grade_1'] != '0') & (df_test['grade_1'] != '3') & (df_test['grade_2'] != '0') & (df_test['grade_2'] != '3')].copy()
     
     # Si se desea utilizar las muestras en las que los patólogos coinciden
     #df = df[(df['grade_1'] != '0') & (df['grade_1'] != '3') & (df['grade_2'] != '0') & (df['grade_2'] != '3') & (df['grade_1'] == df['grade_2'])].copy()
@@ -67,12 +71,17 @@ def get_dataset(pipeline):
     #df.columns = pipeline["x_col_name"] , pipeline["y_col_name"]
 
     datos["df_train"] = df_train
+    datos["df_val"] = df_val
     datos["df_test1"] = df_test1
     datos["df_test2"] = df_test2
 
     print("## TRAIN ##")
     print(df_train.groupby(pipeline["y_col_name"]).count())
     print("TOTAL TRAIN: ",len(df_train))
+    print("\n")
+    print("## VAL ##")
+    print(df_val.groupby(pipeline["y_col_name"]).count())
+    print("TOTAL VAL: ",len(df_val))
     print("\n")
     print("## TEST1 ##")
     print(df_test1.groupby(pipeline["y_col_name"]+'1').count())
@@ -112,21 +121,28 @@ def dividir_balanceado2(df,fragmentos):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
         fold.append([X_train,X_test,y_train,y_test])
+    
     return fold
 
 def get_Fold(kfold, datos, pipeline):
 
     fold = datos["kfold_total"]
 
-    df_train_base = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
-    df_train_base.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+    #df_train_base = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
+    df_train_base = datos["df_train"]
+    df_train_base.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
 
     df_val = pd.DataFrame([fold[kfold][1],fold[kfold][3]]).T
-    df_val.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+    #df_val = datos["df_val"]
+    df_val.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
 
     total_train = len(datos["df_train"])
     total_val = len(df_val)
-    total_grand = total_train + len(datos["df_test1"])
+
+    #if pipeline["labeling_method"] == 'democratic':
+    total_grand = total_train + total_val + len(datos["df_test1"])
+    #elif pipeline["labeling_method"] == 'decision':
+    #    total_grand = total_train + len(datos["df_test1"])
 
     ratio_local_train = round((len(df_train_base)/total_train)*100, 2)
     ratio_local_val = round((total_val/total_train)*100, 2)
@@ -199,16 +215,18 @@ def get_Fold(kfold, datos, pipeline):
     print(f"  TOTAL {total_samples} {ratio_global_total}% (GLOBAL)")
     print("\n")
 
-    # Segmentación de U en lotes para etiquetar
-    batch_set = list(dividir_lotes(df_U, pipeline["batch_size_u"]))
-    for i in range(len(batch_set)):
-        total_batch_U = len(batch_set[i])
-        ratio_global_batch_U = round((total_batch_U/total_grand)*100, 2)
-        print(f"BATCH_U {total_batch_U} {ratio_global_batch_U}% (GLOBAL)")
+    if pipeline["labeling_method"] == "decision":
+        # Segmentación de U en lotes para etiquetar
+        batch_set = list(dividir_lotes(df_U, pipeline["batch_size_u"]))
+        for i in range(len(batch_set)):
+            total_batch_U = len(batch_set[i])
+            ratio_global_batch_U = round((total_batch_U/total_grand)*100, 2)
+            print(f"BATCH_U {total_batch_U} {ratio_global_batch_U}% (GLOBAL)")
+
+        datos["batch_set"] = batch_set
 
     datos["df_train"] = df_train
     datos["df_val"] = df_val
-    datos["batch_set"] = batch_set
     datos["EL"] = EL
     datos["LC"] = LC
     datos["U"] = df_U
@@ -218,7 +236,7 @@ def get_Fold(kfold, datos, pipeline):
 def split_train_test(datos, pipeline):
 
     # Segmentacion 80% train base y 20% val
-    fold_base = dividir_balanceado2(datos["df_train"], pipeline["split_train_test"])
+    #fold_base = dividir_balanceado2(datos["df_train"], pipeline["split_train_test"])
+    fold_base = dividir_balanceado2(datos["df_val"], pipeline["split_train_test"])
     datos["kfold_total"] = fold_base
-
     return datos

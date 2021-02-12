@@ -4,6 +4,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from ssl_train import get_model
 from ssl_train import get_preprocess_function
 
+import pandas as pd
+
 def generadores(etapa, architecture, datos, pipeline, label_active, iteracion, patologo, models_info):
 
     preprocess_function = get_preprocess_function(architecture)

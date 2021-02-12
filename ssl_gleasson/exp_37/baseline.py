@@ -53,7 +53,7 @@ from utils_data import get_Fold
 from ssl_train import training
 from ssl_eval import evaluate_cotrain
 from ssl_eval import classification_metrics
-from ssl_label import labeling
+from ssl_label import labeling, labeling_v2
 from ssl_stats import label_stats
 
 # TO DO -> USE UNIVERSAL DICTS
@@ -96,11 +96,14 @@ def ssl_global(model_zoo, pipeline):
         #datos_path = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(kfold)+'_data.pkl'
         #df_datos.to_pickle(datos_path)
         
-        numero_lotes = len(datos["batch_set"])
+        if pipeline["labeling_method"] == 'decision':
+            total_stages = len(datos["batch_set"])
+        elif pipeline["labeling_method"] == 'democratic':
+            total_stages = pipeline["labeling_stages"]
 
-        for iteracion in range(numero_lotes*1):
+        for iteracion in range(total_stages*1):
             
-            kfold_info = f"K-FOLD {kfold}/{num_kfold} - ITERACION {iteracion}/{numero_lotes}"
+            kfold_info = f"K-FOLD {kfold}/{num_kfold} - ITERACION {iteracion}/{total_stages}"
             print("\n")
             print("#"*len(kfold_info))
             print(kfold_info)
@@ -109,7 +112,19 @@ def ssl_global(model_zoo, pipeline):
             
             print("\n")
             print(f"CLASS DISTRIBUTION - BATCH_SET {iteracion}")
-            print( datos["batch_set"][iteracion].groupby(pipeline["y_col_name"]).count() )
+            
+            if len(datos["LC"]) > 0:
+                U_set = pd.DataFrame(datos["LC"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
+                #print("LABELING LOW CONFIDENCE SAMPLES (LC)")
+                print( U_set.groupby(pipeline["y_col_name"]).count() )
+                #print("OK - LABELING LOW CONFIDENCE SAMPLES (LC)")
+            else:
+                U_set = datos['U']
+                #print("LABELING UNLABELED SAMPLES (U)")
+                print( U_set.groupby(pipeline["y_col_name"]).count() )
+                #print("OK - LABELING UNLABELED SAMPLES (U)")
+
+            #print( datos["batch_set"][iteracion].groupby(pipeline["y_col_name"]).count() )
             print(f"OK - CLASS DISTRIBUTION - BATCH_SET {iteracion}")
             print("\n")
 
@@ -200,12 +215,17 @@ def ssl_global(model_zoo, pipeline):
             #df_batchset[pipeline["y_col_name"]] = '0'
 
             #datos['df_batchset'] = df_batchset
-
+            
             print("LABELING ...")
 
-            datos, EL_iter, LC_iter , label_infer_df = labeling(etapa, mod_top1, mod_top2, mod_top3, 
-                                                arch_top1, arch_top2, arch_top3, 
-                                                datos, pipeline, iteracion, models_info)
+            if pipeline["labeling_method"] == "decision":
+                datos, EL_iter, LC_iter, EL_accu, LC_accu, label_infer_df = labeling(etapa, mod_top1, mod_top2, mod_top3, 
+                                                    arch_top1, arch_top2, arch_top3, 
+                                                    datos, pipeline, iteracion, models_info)
+            elif pipeline["labeling_method"] == "democratic": 
+                datos, EL_iter, LC_iter, EL_accu, LC_accu, label_infer_df = labeling_v2(etapa, mod_top1, mod_top2, mod_top3, 
+                                                    arch_top1, arch_top2, arch_top3, 
+                                                    datos, pipeline, iteracion, models_info)
 
             df_label_info = {
                     "kfold": kfold,
@@ -243,7 +263,8 @@ def ssl_global(model_zoo, pipeline):
 
             ssl_th = pipeline["ssl_threshold"]
             
-            logs_label.append([kfold,iteracion,arch_top1,arch_top2,arch_top3,len(EL_iter),len(LC_iter),ssl_th])
+            logs_label.append([kfold, iteracion, arch_top1, arch_top2, arch_top3,
+                                len(EL_iter), len(LC_iter), EL_accu, LC_accu, ssl_th])
             save_logs(logs_label,'label',pipeline)
 
             reset_keras(pipeline)
@@ -342,7 +363,7 @@ logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
 "test1_loss","test1_accu","test1_precision","test1_recall","test1_f1score",
 "test2_loss","test2_accu","test2_precision","test2_recall","test2_f1score"])
 logs_time.append(["kfold","iteracion","arquitectura","training_time"])
-logs_label.append(["kfold","iteracion","arquitectura","EL","LC"])
+logs_label.append(["kfold", "iteracion", "arquitectura", "EL", "LC", "EL_accu", "LC_accu", "ssl_th"])
 logs_infer_time.append(["kfold","iteracion","arquitectura","infer_time","num_test_samples"])
 
 save_logs(logs,'train', pipeline)

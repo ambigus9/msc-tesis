@@ -22,6 +22,17 @@ def transfer_learning_classic(base_model, num_clases, pipeline):
         layer.trainable = True
     return model
 
+def calculate_weights(df):
+    df_temp = df.copy()
+    class_weights = {}
+    
+    class_count_max = df_temp.max().values[0]
+
+    for i in range(len(df_temp)):
+        class_weights[i] = (class_count_max / df_temp.iloc[i,0])
+
+    return class_weights
+
 def transfer_learning_soft(base_model, num_clases, pipeline):
 
     if pipeline['layer_percent'] == 1:
