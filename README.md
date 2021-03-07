@@ -1,4 +1,10 @@
 # msc-tesis
+## Update enviroment
+```
+apt-get update
+apt-get install wget
+```
+
 ## Preparing schema
 ```
 mkdir data/
