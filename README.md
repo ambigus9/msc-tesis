@@ -2,7 +2,7 @@
 ## Update enviroment
 ```
 apt-get update
-apt-get install wget
+apt-get install wget zip
 ```
 
 ## Preparing schema
