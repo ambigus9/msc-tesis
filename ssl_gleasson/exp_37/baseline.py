@@ -3,6 +3,7 @@
 import os
 import random
 
+from shutil import copyfile
 from utils_general import read_yaml
 from utils_general import reset_keras
 from utils_general import save_logs
@@ -358,6 +359,11 @@ os.makedirs( plot_conf , exist_ok=True)
 os.makedirs( logs_path , exist_ok=True)
 os.makedirs( models_path, exist_ok=True)
 os.makedirs( data_path, exist_ok=True)
+
+# BACKUP CONFIG YML
+yml_config = str(args.yml)
+yml_config_path = os.path.join( pipeline["save_path_results"] , yml_config.split('/')[-1] )
+copyfile(yml_config, yml_config_path)
 
 logs.append(["kfold","iteracion","arquitectura","val_loss","val_accu",
 "test1_loss","test1_accu","test1_precision","test1_recall","test1_f1score",

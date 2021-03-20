@@ -17,6 +17,7 @@ from utils_general import save_logs
 
 from ml_strategy import transfer_learning_classic
 from ml_strategy import transfer_learning_soft
+from ml_strategy import calculate_weights
 
 def training(kfold, etapa, datos, architecture, iteracion, models_info, classification_metrics, pipeline):
     
@@ -220,9 +221,9 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
         print("CALCULATING CLASS_WEIGHTS")
 
         if etapa == 'train':
-            class_weights = calculate_weights(datos['df_train'])
+            class_weights = calculate_weights(datos['df_train'], pipeline)
         if etapa == 'train_EL':
-            class_weights = calculate_weights(datos['df_train_EL'])
+            class_weights = calculate_weights(datos['df_train_EL'], pipeline)
 
         #class_weights = class_weight.compute_class_weight('balanced',
         #                                                np.unique(train_generator.classes),

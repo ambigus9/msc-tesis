@@ -132,7 +132,7 @@ def get_Fold(kfold, datos, pipeline):
     df_train_base = datos["df_train"]
     df_train_base.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
 
-    df_val = pd.DataFrame([fold[kfold][1],fold[kfold][3]]).T
+    df_val = pd.DataFrame([ fold[kfold][1], fold[kfold][3]] ).T
     #df_val = datos["df_val"]
     df_val.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
 
@@ -166,14 +166,14 @@ def get_Fold(kfold, datos, pipeline):
     #print(f"  TEST2 {ratio_global_test2}% (GLOBAL)")
 
     # Segmentación del 60% de train en 10% train y 50% Unlabeled
-    sub_fold = dividir_balanceado2(df_train_base,6)
-    df_train = pd.DataFrame([sub_fold[0][1],sub_fold[0][3]]).T
-    df_train.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+    sub_fold = dividir_balanceado2(df_train_base, 6)
+    df_train_init = pd.DataFrame([sub_fold[0][1],sub_fold[0][3]]).T
+    df_train_init.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
 
-    total_train_init = len(df_train)
+    total_train_init = len(df_train_init)
 
-    ratio_local_train_init = round((len(df_train)/total_train)*100, 2)
-    ratio_global_train_init = round((len(df_train)/total_grand)*100, 2)
+    ratio_local_train_init = round((len(df_train_init)/total_train)*100, 2)
+    ratio_global_train_init = round((len(df_train_init)/total_grand)*100, 2)
     print(f"TRAIN INIT {ratio_local_train_init}% (LOCAL) , {ratio_global_train_init}% (GLOBAL)")
 
     df_U = pd.DataFrame([sub_fold[0][0],sub_fold[0][2]]).T
@@ -185,7 +185,7 @@ def get_Fold(kfold, datos, pipeline):
     total_U = len(df_U)
     ratio_global_U = round((total_U/total_grand)*100, 2)
 
-    EL,LC = [],[]
+    EL, LC = [],[]
 
     # saving csv data
     #save_csv_train = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_train.csv')
@@ -225,7 +225,7 @@ def get_Fold(kfold, datos, pipeline):
 
         datos["batch_set"] = batch_set
 
-    datos["df_train"] = df_train
+    datos["df_train_init"] = df_train_init
     datos["df_val"] = df_val
     datos["EL"] = EL
     datos["LC"] = LC
