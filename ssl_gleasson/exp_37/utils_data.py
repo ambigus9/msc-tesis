@@ -132,8 +132,8 @@ def get_Fold(kfold, datos, pipeline):
     df_train_base = datos["df_train"]
     df_train_base.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
 
-    df_val = pd.DataFrame([ fold[kfold][1], fold[kfold][3]] ).T
-    #df_val = datos["df_val"]
+    #df_val = pd.DataFrame([ fold[kfold][1], fold[kfold][3]] ).T
+    df_val = datos["df_val"]
     df_val.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
 
     total_train = len(datos["df_train"])

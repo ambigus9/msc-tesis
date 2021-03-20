@@ -22,13 +22,22 @@ def transfer_learning_classic(base_model, num_clases, pipeline):
         layer.trainable = True
     return model
 
-def calculate_weights(df):
+def calculate_weights(df, pipeline):
     df_temp = df.copy()
     class_weights = {}
     
+    df_temp.to_pickle('gleasson_df.pkl')
+    class_weights = {
+        0: 1.0,
+        1: 1.0
+    }
+    return class_weights
+    
+    print(df_temp)
     class_count_max = df_temp.max().values[0]
-
+    print(class_count_max)
     for i in range(len(df_temp)):
+        print(df_temp.iloc[i,0])
         class_weights[i] = (class_count_max / df_temp.iloc[i,0])
 
     return class_weights
