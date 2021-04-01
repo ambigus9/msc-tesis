@@ -5,6 +5,7 @@ matplotlib
 tensorflow-gpu
 Pillow
 PyYAML
+plotly
 seaborn
 psutil
 requests

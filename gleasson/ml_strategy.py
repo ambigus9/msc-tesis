@@ -29,7 +29,9 @@ def calculate_weights(df, pipeline):
     df_temp.to_pickle('gleasson_df.pkl')
     class_weights = {
         0: 1.0,
-        1: 1.0
+        1: 1.0,
+        2: 1.0,
+        3: 1.0,
     }
     return class_weights
     

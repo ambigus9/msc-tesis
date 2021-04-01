@@ -164,10 +164,10 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
         
     if etapa == 'train':
         #NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["train_epochs"]
-        num_train_images = len(datos['df_train'])*AUG_FACTOR
+        num_train_images = len(datos['df_train'])#*AUG_FACTOR
     if etapa == 'train_EL':
         #NUM_EPOCHS = pipeline["modality_config"][pipeline["modality"]]["batch_epochs"]
-        num_train_images = len(datos['df_train_EL'])*AUG_FACTOR
+        num_train_images = len(datos['df_train_EL'])#*AUG_FACTOR
 
     STEP_SIZE_TRAIN=num_train_images//train_generator.batch_size
     STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size

@@ -40,7 +40,7 @@ from tensorflow.keras.models import load_model
 
 random.seed(SEED)
 np.random.seed(SEED)
-tensorflow.random.set_random_seed(SEED)
+tensorflow.random.set_seed(SEED)
 
 if int(args.gpu) >= 0:
     gpus = tensorflow.config.experimental.list_physical_devices('GPU')
@@ -268,7 +268,7 @@ def ssl_global(model_zoo, pipeline):
                                 len(EL_iter), len(LC_iter), EL_accu, LC_accu, ssl_th])
             save_logs(logs_label,'label',pipeline)
 
-            reset_keras(pipeline)
+            #reset_keras(pipeline)
 
     end = time.time()
     print(end - start)

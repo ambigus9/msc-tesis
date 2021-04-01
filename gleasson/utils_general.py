@@ -3,8 +3,7 @@ import gc
 import csv
 import yaml
 import numpy as np
-from tensorflow.keras.backend import clear_session
-from tensorflow.keras.backend import get_session
+import tensorflow as tf
 
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -16,17 +15,12 @@ def read_yaml(yml_path):
         dataMap = yaml.safe_load(f)
     return dataMap
 
-#def reset_keras():
-#    # Reset Keras Session
-#    clear_session()
-#    print(gc.collect())
-
 def reset_keras(pipeline):
     # Reset Keras Session
-    sess = get_session()
-    clear_session()
+    sess = tf.compat.v1.keras.backend.get_session()
+    tf.compat.v1.keras.backend.clear_session()
     sess.close()
-    sess = get_session()
+    sess = tf.compat.v1.keras.backend.get_session()
 
     print("GC COLLECT")
     print(gc.collect())
@@ -125,10 +119,11 @@ def save_confusion_matrix(cm, labels, kfold, iteracion, architecture, pipeline):
 def save_plots(history, kfold, iteracion, architecture, pipeline):
 
     ID = pipeline['id']
-
+    print(history)
+    print(history.history)
     # Plot training & validation accuracy values
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
     plt.title('Model accuracy - {}'.format(architecture))
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')

@@ -1,8 +1,8 @@
-id : 90
+id : 93
 dataset: gleasson
 dataset_base: hardvard
 weights: imagenet
-train_epochs: 5
+train_epochs: 10
 learning_rate: 1e-5
 aug_factor: 2
 ssl_threshold: 0.90
@@ -14,7 +14,7 @@ early_stopping_patience: 8
 reduce_lr: False
 reduce_lr_patience: 4
 aug_stages: False
-class_weight: True
+class_weight: False
 use_stage_config: False
 balance_downsampling: True
 cm_normalize: True
@@ -26,12 +26,12 @@ img_height: 299
 img_width: 299
 labeling_method: decision
 labeling_stages: 5
-grades: 1+2
+grades: 1+2+3+4
 transfer_learning: classic
 x_col_name: patch_name
 y_col_name: grade_
 metrics: weighted
-ruta_base: /home/miguel/msc-tesis/ssl_gleasson/data
+ruta_base: /home/miguel/msc-tesis/gleasson/data
 save_path_fig: plots/
 save_path_logs: logs/
 save_path_results: results/

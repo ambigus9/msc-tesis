@@ -28,7 +28,10 @@ rm -rv gleasson.zip
 ## How to use
 
 ```
-docker exec -it miguel bash
-cd /home/miguel/msc-tesis/ssl_gleasson/exp_37/
-python baseline.py --yml config/gleasson.yml --gpu -1
+docker start miguel-tf2
+docker exec -it miguel-tf2 bash
+su
+
+cd /home/miguel/msc-tesis/gleasson/
+python baseline.py --yml config/gleasson.yml --gpu 5
 ```
