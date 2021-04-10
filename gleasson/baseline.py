@@ -268,7 +268,7 @@ def ssl_global(model_zoo, pipeline):
                                 len(EL_iter), len(LC_iter), EL_accu, LC_accu, ssl_th])
             save_logs(logs_label,'label',pipeline)
 
-            #reset_keras(pipeline)
+            reset_keras(pipeline)
 
     end = time.time()
     print(end - start)
@@ -378,5 +378,6 @@ save_logs(logs_label,'label', pipeline)
 save_logs(logs_infer_time,'infer_time', pipeline)
 
 #models = ['ResNet152','InceptionV4','InceptionV3']
-models = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
+#models = ['ResNet50','Xception','DenseNet169','InceptionV4','DenseNet121']
+models = ['ResNet50','Xception','DenseNet169']
 ssl_global(model_zoo=models, pipeline=pipeline)

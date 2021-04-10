@@ -1,10 +1,10 @@
-id : 93
+id : 96
 dataset: gleasson
 dataset_base: hardvard
 weights: imagenet
-train_epochs: 10
+train_epochs: 1
 learning_rate: 1e-5
-aug_factor: 2
+aug_factor: 1
 ssl_threshold: 0.90
 split_train_test: 4
 split_kfold: 4
@@ -14,9 +14,9 @@ early_stopping_patience: 8
 reduce_lr: False
 reduce_lr_patience: 4
 aug_stages: False
-class_weight: False
+class_weight: True
 use_stage_config: False
-balance_downsampling: True
+balance_downsampling: False
 cm_normalize: True
 checkpoint: False
 restart_weights: True
@@ -26,7 +26,7 @@ img_height: 299
 img_width: 299
 labeling_method: decision
 labeling_stages: 5
-grades: 1+2+3+4
+grades: 1+2
 transfer_learning: classic
 x_col_name: patch_name
 y_col_name: grade_

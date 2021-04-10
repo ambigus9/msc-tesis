@@ -27,13 +27,13 @@ def calculate_weights(df, pipeline):
     class_weights = {}
     
     df_temp.to_pickle('gleasson_df.pkl')
-    class_weights = {
-        0: 1.0,
-        1: 1.0,
-        2: 1.0,
-        3: 1.0,
-    }
-    return class_weights
+    #class_weights = {
+        #0: 1.0,
+        #1: 1.0,
+        #2: 1.0,
+        #3: 1.0,
+    #}
+    #return class_weights
     
     print(df_temp)
     class_count_max = df_temp.max().values[0]

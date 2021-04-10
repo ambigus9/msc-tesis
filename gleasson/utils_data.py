@@ -209,7 +209,7 @@ def get_Fold(kfold, datos, pipeline):
     print(f"  TRAIN  {total_train_init} {ratio_global_train_init}% (GLOBAL)")
     print(f"    VAL  {total_val} {ratio_global_val}% (GLOBAL)")
     print(f"  TEST1  {total_test1} {ratio_global_test1}%  (GLOBAL)")
-    #print(f"  TEST2  {total_test2} {ratio_global_test2}%  (GLOBAL)")
+    print(f"  TEST2  {total_test2} {ratio_global_test2}%  (GLOBAL)")
     print(f"      U  {total_U} {ratio_global_U}% (GLOBAL)")
     print(f"--------------------------------------------")
     print(f"  TOTAL {total_samples} {ratio_global_total}% (GLOBAL)")

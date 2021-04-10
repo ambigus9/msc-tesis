@@ -220,14 +220,21 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
 
         print("CALCULATING CLASS_WEIGHTS")
 
-        if etapa == 'train':
-            class_weights = calculate_weights(datos['df_train'], pipeline)
-        if etapa == 'train_EL':
-            class_weights = calculate_weights(datos['df_train_EL'], pipeline)
+        #if etapa == 'train':
+        #    class_weights = calculate_weights(datos['df_train'], pipeline)
+        #if etapa == 'train_EL':
+            #class_weights = calculate_weights(datos['df_train_EL'], pipeline)
 
-        #class_weights = class_weight.compute_class_weight('balanced',
-        #                                                np.unique(train_generator.classes),
-        #                                                train_generator.classes)
+
+        class_weights = class_weight.compute_class_weight('balanced',
+                                                        np.unique(train_generator.classes),
+                                                        train_generator.classes)
+        
+        class_weights = {
+            0: class_weights[0],
+            1: class_weights[1]
+        }
+
         print("OK - CALCULATING CLASS_WEIGHTS")
         print("USING CLASS WEIGHTING")
         print(class_weights)
