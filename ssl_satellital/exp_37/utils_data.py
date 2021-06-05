@@ -94,8 +94,12 @@ def get_Fold(kfold, datos, pipeline):
 
     df_test = datos["df_test"]
 
-    # Segmentación del 60% de train en 10% train y 50% Unlabeled
-    sub_fold = dividir_balanceado2(df_train,6)
+    if pipeline["init_train"] == "10%":
+        # Segmentación del 60% de train en 10% train y 50% Unlabeled
+        sub_fold = dividir_balanceado2(df_train,6)
+    elif pipeline["init_train"] == "5%":
+        # Segmentación del 60% de train en 5% train y 55% Unlabeled
+        sub_fold = dividir_balanceado2(df_train,12)
     df_train = pd.DataFrame([sub_fold[0][1],sub_fold[0][3]]).T
     df_train.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
 
