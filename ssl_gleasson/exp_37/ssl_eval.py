@@ -172,14 +172,16 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
     cm = calculate_confusion_matrix(y_true, y_pred)
     #plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
 
-    save_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
+    ## TODO -> SAVE CONFUSION MATRIX
+    #save_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
 
     # normalize confusion matrix
     if pipeline["cm_normalize"]:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         cm = np.round(cm, 2)
 
-    plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
+    ## TODO -> PLOT CONFUSION MATRIX
+    ##plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
     
     #acc_cls = accuracy_by_class(cm, [*labels])
     #print("ACCURACY BY CLASS")
