@@ -82,16 +82,20 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
 
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
     
-    cm = calculate_confusion_matrix(y_true, y_pred)
-   
-    save_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
+    # TODO Bugfix Calculate Confusion Matrix
+    #cm = calculate_confusion_matrix(y_true, y_pred)
+    
+    # TODO Bugfix Calculate Confusion Matrix
+    #save_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
 
+    # TODO Bugfix Calculate Confusion Matrix
     # normalize confusion matrix
-    if pipeline["cm_normalize"]:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        cm = np.round(cm, 2)
+    #if pipeline["cm_normalize"]:
+    #    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    #    cm = np.round(cm, 2)
 
-    plot_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
+    # TODO Bugfix Calculate Confusion Matrix
+    #plot_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
     
     #acc_cls = accuracy_by_class(cm, [*labels_arch1])
     #print("ACCURACY BY CLASS")
