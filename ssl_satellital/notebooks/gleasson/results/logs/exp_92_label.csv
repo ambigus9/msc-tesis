@@ -1,0 +1,6 @@
+kfold,iteracion,arquitectura1,arquitectura2,arquitectura3,EL,LC,EL_accu,LC_accu,ssl_th
+0,0,Xception,DenseNet121,ResNet50,568,2888,0.9964788732394366,0.7558864265927978,0.9
+0,1,ResNet50,Xception,InceptionV4,16,2864,1.0,0.797486033519553,0.9
+0,2,DenseNet121,Xception,ResNet50,189,2675,0.9894179894179894,0.8646728971962617,0.9
+0,3,DenseNet121,DenseNet169,Xception,14,2658,1.0,0.8765989465763732,0.9
+0,4,Xception,InceptionV4,DenseNet121,15,2641,1.0,0.6925407042786823,0.9
