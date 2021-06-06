@@ -160,17 +160,21 @@ def classification_metrics(model, train_generator, test_generator, test_steps,
     #print([*labels])
 
     class_metrics = precision_recall_fscore_support(y_true, y_pred, average=pipeline["metrics"])
-    cm = calculate_confusion_matrix(y_true, y_pred)
+    # TODO -> BUG CONFUSION MATRIX
+    #cm = calculate_confusion_matrix(y_true, y_pred)
     #plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
 
-    save_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
+    # TODO -> BUG SAVE CONFUSION MATRIX
+    #save_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
 
     # normalize confusion matrix
-    if pipeline["cm_normalize"]:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        cm = np.round(cm, 2)
+    # TODO -> BUG CONFUSION MATRIX
+    #if pipeline["cm_normalize"]:
+    #    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    #    cm = np.round(cm, 2)
 
-    plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
+    # TODO -> BUG CONFUSION MATRIX
+    #plot_confusion_matrix(cm, [*labels], kfold, iteracion, architecture, pipeline)
     
     #acc_cls = accuracy_by_class(cm, [*labels])
     #print("ACCURACY BY CLASS")
