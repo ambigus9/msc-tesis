@@ -18,15 +18,23 @@ def get_dataset(pipeline):
 
     dataset_base = pipeline["dataset_base"]
 
+    server = pipeline["server"]
+    if server == "bivl2ab":
+        base_path = pipeline["path_bivl2ab"]
+    elif server == "colab":
+        base_path = pipeline["path_colab"]
+    else:
+        pass
+
     if dataset_base == 'ucmerced':
-        L = '/{}/{}/Images'.format(pipeline["ruta_base"],dataset_base)
+        L = '/{}/{}/Images'.format(base_path,dataset_base)
 
     if dataset_base == 'whu_rs19' or dataset_base == 'AID':
-        L = '/{}/{}/'.format(pipeline["ruta_base"],dataset_base)
+        L = '/{}/{}/'.format(base_path,dataset_base)
 
     if dataset_base == 'NWPU-RESISC45':
-        #L = '/{}/{}/'.format(pipeline["ruta_base"],dataset_base)
-        L = os.path.join(pipeline["ruta_base"],dataset_base)
+        #L = '/{}/{}/'.format(base_path,dataset_base)
+        L = os.path.join(base_path,dataset_base)
 
     imagenes, clases = [],[]
 
@@ -39,7 +47,6 @@ def get_dataset(pipeline):
     df=pd.DataFrame([imagenes,clases]).T
     df.columns = pipeline["x_col_name"] , pipeline["y_col_name"]
     return df
-
 def validar_existencia(df, pipeline):
     imgs = df[pipeline["x_col_name"]].values.tolist()
     num = 0
