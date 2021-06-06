@@ -313,6 +313,13 @@ pipeline['stage_config'] = {
     }
 }
 
+server = pipeline["server"]
+
+if server == "colab":
+    pipeline["save_path_results"] = os.path.join( "/content/drive/MyDrive/msc-miguel/satellital/", pipeline["save_path_results"] )
+#elif server == "bivl2ab":
+#    pipeline["save_path_results"] = os.path.join( "/content/", pipeline["save_path_results"] )
+
 # UPDATE PIPELINE
 pipeline["save_path_results"] = os.path.join( pipeline["save_path_results"], f'exp_{pipeline["id"]}' )
 
