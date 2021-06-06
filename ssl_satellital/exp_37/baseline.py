@@ -317,11 +317,15 @@ server = pipeline["server"]
 
 if server == "colab":
     pipeline["save_path_results"] = os.path.join( "/content/drive/MyDrive/msc-miguel/satellital/", pipeline["save_path_results"] )
+    save_path_results = pipeline["save_path_results"]
+    print(f"Path to save results initial: {save_path_results} on {server}")
 #elif server == "bivl2ab":
 #    pipeline["save_path_results"] = os.path.join( "/content/", pipeline["save_path_results"] )
 
 # UPDATE PIPELINE
 pipeline["save_path_results"] = os.path.join( pipeline["save_path_results"], f'exp_{pipeline["id"]}' )
+
+print(f"Path to save results final: {save_path_results} on {server}")
 
 pipeline["save_path_fig"] = os.path.join( pipeline["save_path_results"], pipeline["dataset_base"], pipeline["save_path_fig"] )
 pipeline["save_path_stats"] = os.path.join( pipeline["save_path_results"], pipeline["dataset_base"], pipeline["save_path_stats"] )
