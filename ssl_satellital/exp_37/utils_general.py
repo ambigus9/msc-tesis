@@ -74,17 +74,18 @@ def plot_confusion_matrix(cm, labels, kfold, iteracion, architecture, pipeline):
     import plotly.express as px
     
     ID = pipeline['id']
-
+    print(f"Labels: {labels}")
     for file_format in [".html",".svg"]:
-
+        print(f"Creating {file_format} file")
         if file_format == '.html':
             cm_labels = labels
-            cm_color_scale = px.colors.sequential.Plasma
+            #cm_color_scale = px.colors.sequential.Plasma
 
         if file_format == '.svg':
             cm_labels = None
-            cm_color_scale = px.colors.sequential.Plasma
-            
+        
+        cm_color_scale = px.colors.sequential.Plasma
+     
         fig = px.imshow(cm,
                         labels=dict(x="Predicted Class", y="True Class", color="Probability (%)"),
                         x=cm_labels,
@@ -95,12 +96,12 @@ def plot_confusion_matrix(cm, labels, kfold, iteracion, architecture, pipeline):
         save_fig_name = f"exp_{ID:02d}_cm_{kfold:02d}_{iteracion:02d}_{architecture}{file_format}"
         save_fig_cm = os.path.join(pipeline["save_path_fig"] , 'conf' , save_fig_name)
         #print(save_fig_cm)
-        
+
         if file_format == '.html':
             # add title
             fig.update_layout(title_text=f'Confusion matrix {kfold:02d}_{iteracion:02d}_{architecture}')
             fig.write_html(save_fig_cm)
-        
+
         if file_format == '.svg':
             fig.update_layout(coloraxis_showscale=False)
             fig.write_image(save_fig_cm)
