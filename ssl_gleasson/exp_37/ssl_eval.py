@@ -94,7 +94,8 @@ def evaluate_cotrain(modelo1,modelo2,modelo3,
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         cm = np.round(cm, 2)
 
-    plot_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
+    ### TODO -> FIX PLOT CONFUSION_MATRIX
+    ### plot_confusion_matrix(cm, [*labels_arch1], kfold, iteracion, architecture, pipeline)
     
     #acc_cls = accuracy_by_class(cm, [*labels_arch1])
     #print("ACCURACY BY CLASS")
