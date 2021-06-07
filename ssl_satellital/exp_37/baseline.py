@@ -316,9 +316,10 @@ pipeline['stage_config'] = {
 server = pipeline["server"]
 
 if server == "colab":
-    pipeline["save_path_results"] = os.path.join( "/content/drive/MyDrive/msc-miguel/satellital/", pipeline["save_path_results"] )
     save_path_results = pipeline["save_path_results"]
     print(f"Path to save results initial: {save_path_results} on {server}")
+    pipeline["save_path_results"] = os.path.join( "/content/drive/MyDrive/msc-miguel/satellital/", pipeline["save_path_results"] )
+
 #elif server == "bivl2ab":
 #    pipeline["save_path_results"] = os.path.join( "/content/", pipeline["save_path_results"] )
 
