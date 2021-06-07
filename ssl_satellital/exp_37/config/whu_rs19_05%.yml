@@ -1,10 +1,10 @@
-id : 101
+id : 104
 dataset: satellital
 dataset_base: whu_rs19
 weights: imagenet
 train_epochs: 30
 learning_rate: 1e-5
-aug_factor: 20
+aug_factor: 10
 init_train: 5%
 ssl_threshold: 0.90
 split_train_test: 5
