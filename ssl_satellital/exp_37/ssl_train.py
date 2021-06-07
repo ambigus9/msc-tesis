@@ -29,7 +29,8 @@ def training(kfold, etapa, datos, architecture, iteracion, models_info, classifi
     print("USING TRANSFORMATIONS FROM SSL_TRAIN")
     datagen = ImageDataGenerator(
                                     preprocessing_function=preprocess_input,
-                                    rotation_range=90,
+                                    ##rotation_range=90,
+                                    rotation_range=360,
                                     #zoom_range=[0.1,0.2],
                                     #brightness_range=[0.1,0.5],
                                     #shear_range=0.2,
