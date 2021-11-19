@@ -24,3 +24,5 @@ ssl_gleasson/exp_37/results/*
 ssl_gleasson/exp_37/__pycache__/*
 ssl_gleasson/exp_37/results/*
 ssl_gleasson/exp_37/notebooks/*.pkl
+ssl_gleasson/exp_37/__pycache__/*
+ssl_gleasson/exp_37/*.pkl

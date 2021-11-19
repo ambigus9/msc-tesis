@@ -128,9 +128,9 @@ def get_Fold(kfold, datos, pipeline):
 
     fold = datos["kfold_total"]
 
-    #df_train_base = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
-    df_train_base = datos["df_train"]
+    df_train_base = pd.DataFrame([fold[kfold][0],fold[kfold][2]]).T
     df_train_base.columns = [pipeline["x_col_name"], pipeline["y_col_name"]]
+    #datos["df_train"] = df_train_base
 
     #df_val = pd.DataFrame([ fold[kfold][1], fold[kfold][3]] ).T
     df_val = datos["df_val"]
@@ -152,9 +152,10 @@ def get_Fold(kfold, datos, pipeline):
 
     print(f"TRAIN BASE {ratio_local_train}% (LOCAL) , {ratio_global_train}% (GLOBAL)")
     print(f"  VAL BASE {ratio_local_val}% (LOCAL) , {ratio_global_val}% (GLOBAL)")
-
+        
     df_test1 = datos["df_test1"]
     df_test2 = datos["df_test2"]
+
 
     total_test1 = len(df_test1)
     total_test2 = len(df_test2)
@@ -165,78 +166,83 @@ def get_Fold(kfold, datos, pipeline):
     #print(f"  TEST1 {ratio_global_test1}% (GLOBAL)")
     #print(f"  TEST2 {ratio_global_test2}% (GLOBAL)")
 
-    # Segmentación del 60% de train en 10% train y 50% Unlabeled
-    sub_fold = dividir_balanceado2(df_train_base, 6)
-    df_train_init = pd.DataFrame([sub_fold[0][1],sub_fold[0][3]]).T
-    df_train_init.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+    if pipeline["method"] == "supervised":
+        return datos
+    elif pipeline["method"] == "semi-supervised":
+        # Segmentación del 60% de train en 10% train y 50% Unlabeled
+        sub_fold = dividir_balanceado2(df_train_base, 6)
+        df_train_init = pd.DataFrame([sub_fold[0][1],sub_fold[0][3]]).T
+        df_train_init.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
 
-    total_train_init = len(df_train_init)
+        total_train_init = len(df_train_init)
 
-    ratio_local_train_init = round((len(df_train_init)/total_train)*100, 2)
-    ratio_global_train_init = round((len(df_train_init)/total_grand)*100, 2)
-    print(f"TRAIN INIT {ratio_local_train_init}% (LOCAL) , {ratio_global_train_init}% (GLOBAL)")
+        ratio_local_train_init = round((len(df_train_init)/total_train)*100, 2)
+        ratio_global_train_init = round((len(df_train_init)/total_grand)*100, 2)
+        print(f"TRAIN INIT {ratio_local_train_init}% (LOCAL) , {ratio_global_train_init}% (GLOBAL)")
 
-    df_U = pd.DataFrame([sub_fold[0][0],sub_fold[0][2]]).T
-    df_U.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
+        df_U = pd.DataFrame([sub_fold[0][0],sub_fold[0][2]]).T
+        df_U.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
 
-    # Shuffle Unlabeled Samples
-    df_U = df_U.sample(frac=1).reset_index(drop=True)
-    
-    total_U = len(df_U)
-    ratio_global_U = round((total_U/total_grand)*100, 2)
+        # Shuffle Unlabeled Samples
+        df_U = df_U.sample(frac=1).reset_index(drop=True)
+        
+        total_U = len(df_U)
+        ratio_global_U = round((total_U/total_grand)*100, 2)
 
-    EL, LC = [],[]
+        EL, LC = [],[]
 
-    # saving csv data
-    #save_csv_train = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_train.csv')
-    #save_csv_val = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_val.csv')
-    #save_csv_test = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_test.csv')
+        # saving csv data
+        #save_csv_train = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_train.csv')
+        #save_csv_val = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_val.csv')
+        #save_csv_test = os.path.join(pipeline["save_path_data"], f'exp_{pipeline["id"]}_kfold_{kfold}_test.csv')
 
-    #df_train.to_csv(save_csv_train,index=False)
-    #df_val.to_csv(save_csv_val,index=False)
-    #df_test.to_csv(save_csv_test,index=False)
-    total_samples = total_train_init + total_val
-    total_samples = total_samples + total_U
-    total_samples = total_samples + total_test1
-    #total_samples = total_samples + total_test2
+        #df_train.to_csv(save_csv_train,index=False)
+        #df_val.to_csv(save_csv_val,index=False)
+        #df_test.to_csv(save_csv_test,index=False)
+        total_samples = total_train_init + total_val
+        total_samples = total_samples + total_U
+        total_samples = total_samples + total_test1
+        #total_samples = total_samples + total_test2
 
-    ratio_global_total = ratio_global_train_init + ratio_global_val
-    ratio_global_total = ratio_global_total + ratio_global_U
-    ratio_global_total = ratio_global_total + ratio_global_test1
-    #ratio_global_total = ratio_global_total + ratio_global_test2
+        ratio_global_total = ratio_global_train_init + ratio_global_val
+        ratio_global_total = ratio_global_total + ratio_global_U
+        ratio_global_total = ratio_global_total + ratio_global_test1
+        #ratio_global_total = ratio_global_total + ratio_global_test2
 
-    print("\n")
-    print(f"  TRAIN  {total_train_init} {ratio_global_train_init}% (GLOBAL)")
-    print(f"    VAL  {total_val} {ratio_global_val}% (GLOBAL)")
-    print(f"  TEST1  {total_test1} {ratio_global_test1}%  (GLOBAL)")
-    #print(f"  TEST2  {total_test2} {ratio_global_test2}%  (GLOBAL)")
-    print(f"      U  {total_U} {ratio_global_U}% (GLOBAL)")
-    print(f"--------------------------------------------")
-    print(f"  TOTAL {total_samples} {ratio_global_total}% (GLOBAL)")
-    print("\n")
+        print("\n")
+        print(f"INIT_TRAIN  {total_train_init} {ratio_global_train_init}% (GLOBAL)")
+        print(f"       VAL  {total_val} {ratio_global_val}% (GLOBAL)")
+        print(f"     TEST1  {total_test1} {ratio_global_test1}%  (GLOBAL)")
+        #print(f"  TEST2  {total_test2} {ratio_global_test2}%  (GLOBAL)")
+        print(f"         U  {total_U} {ratio_global_U}% (GLOBAL)")
+        print(f"--------------------------------------------")
+        print(f"  TOTAL {total_samples} {ratio_global_total}% (GLOBAL)")
+        print("\n")
 
-    if pipeline["labeling_method"] == "decision":
-        # Segmentación de U en lotes para etiquetar
-        batch_set = list(dividir_lotes(df_U, pipeline["batch_size_u"]))
-        for i in range(len(batch_set)):
-            total_batch_U = len(batch_set[i])
-            ratio_global_batch_U = round((total_batch_U/total_grand)*100, 2)
-            print(f"BATCH_U {total_batch_U} {ratio_global_batch_U}% (GLOBAL)")
+        if pipeline["labeling_method"] == "decision":
+            # Segmentación de U en lotes para etiquetar
+            batch_set = list(dividir_lotes(df_U, pipeline["batch_size_u"]))
+            for i in range(len(batch_set)):
+                total_batch_U = len(batch_set[i])
+                ratio_global_batch_U = round((total_batch_U/total_grand)*100, 2)
+                print(f"BATCH_U {total_batch_U} {ratio_global_batch_U}% (GLOBAL)")
 
-        datos["batch_set"] = batch_set
+            datos["batch_set"] = batch_set
 
-    datos["df_train_init"] = df_train_init
-    datos["df_val"] = df_val
-    datos["EL"] = EL
-    datos["LC"] = LC
-    datos["U"] = df_U
+        datos["df_train_init"] = df_train_init
+        datos["df_val"] = df_val
+        datos["EL"] = EL
+        datos["LC"] = LC
+        datos["U"] = df_U
+    else:
+        pass
 
     return datos
 
 def split_train_test(datos, pipeline):
 
     # Segmentacion 80% train base y 20% val
-    #fold_base = dividir_balanceado2(datos["df_train"], pipeline["split_train_test"])
-    fold_base = dividir_balanceado2(datos["df_val"], pipeline["split_train_test"])
+    fold_base = dividir_balanceado2(datos["df_train"], pipeline["split_train_test"])
+    #fold_base = dividir_balanceado2(datos["df_val"], pipeline["split_train_test"])
     datos["kfold_total"] = fold_base
     return datos

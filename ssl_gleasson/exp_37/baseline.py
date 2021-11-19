@@ -70,50 +70,61 @@ def ssl_global(model_zoo, pipeline):
     #print(datos)
     #return True
 
-    datos = split_train_test(datos, pipeline)
+    #datos = split_train_test(datos, pipeline)
 
     #return True
     # Medir tiempo de ejecucion
     import time
     start = time.time()
 
-    split_kfold = pipeline["split_kfold"]
-    num_kfold = pipeline["num_kfold"]
+    #split_kfold = pipeline["split_kfold"]
+    #num_kfold = pipeline["num_kfold"]
+    method = pipeline["method"]
+    
+    #for kfold in range(num_kfold):
 
-    for kfold in range(num_kfold):
+    models_info = {}
 
-        models_info = {}
+    if method == "semi-supervised":
         datos = get_Fold(kfold, datos, pipeline)
 
-        #return True
+    #return True
 
-        #datos_by_fold = {
-        #    "kfold": kfold,
-        #    "datos": datos
-        #}
+    #datos_by_fold = {
+    #    "kfold": kfold,
+    #    "datos": datos
+    #}
 
-        #datos_total.append(datos_by_fold)
-        #df_datos = pd.DataFrame(datos_total)
-        #datos_path = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(kfold)+'_data.pkl'
-        #df_datos.to_pickle(datos_path)
+    #datos_total.append(datos_by_fold)
+    #df_datos = pd.DataFrame(datos_total)
+    #datos_path = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(kfold)+'_data.pkl'
+    #df_datos.to_pickle(datos_path)
+
+    if method == "supervised":
+        kfold = 0
+        total_stages = 1#pipeline["train_epochs"]
+    elif pipeline["labeling_method"] == 'decision' and method == "semi-supervised":
+        total_stages = len(datos["batch_set"])
+    elif pipeline["labeling_method"] == 'democratic' and method == "semi-supervised":
+        total_stages = pipeline["labeling_stages"]
+    else:
+        pass
+
+    for iteracion in range(total_stages*1):
         
-        if pipeline["labeling_method"] == 'decision':
-            total_stages = len(datos["batch_set"])
-        elif pipeline["labeling_method"] == 'democratic':
-            total_stages = pipeline["labeling_stages"]
+        #kfold_info = f"K-FOLD {kfold}/{num_kfold} - ITERACION {iteracion}/{total_stages}"
+        #print("\n")
+        #print("#"*len(kfold_info))
+        #print(kfold_info)
+        #print("#"*len(kfold_info))
+        #print("\n")
 
-        for iteracion in range(total_stages*1):
-            
-            kfold_info = f"K-FOLD {kfold}/{num_kfold} - ITERACION {iteracion}/{total_stages}"
-            print("\n")
-            print("#"*len(kfold_info))
-            print(kfold_info)
-            print("#"*len(kfold_info))
-            print("\n")
-            
+        info = f"METHOD - {method} - ITERATION {iteracion}/{total_stages}"
+                
+        if method == "semi-supervised":
             print("\n")
             print(f"CLASS DISTRIBUTION - BATCH_SET {iteracion}")
-            
+
             if len(datos["LC"]) > 0:
                 U_set = pd.DataFrame(datos["LC"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
                 #print("LABELING LOW CONFIDENCE SAMPLES (LC)")
@@ -129,146 +140,144 @@ def ssl_global(model_zoo, pipeline):
             print(f"OK - CLASS DISTRIBUTION - BATCH_SET {iteracion}")
             print("\n")
 
-            if iteracion == 0:
-                etapa = 'train'
-            else:
-                etapa = 'train_EL'
+        if iteracion == 0 or method == "supervised":
+            etapa = 'train'
+        else:
+            etapa = 'train_EL'
 
-            for model in model_zoo:
-                
-                print("AUG_FACTOR: ", pipeline["aug_factor"])
-                
-                model_memory , model_performance = training(kfold,etapa,datos,model,iteracion,models_info,classification_metrics,pipeline)
-
-                models_info[model] = {
-                    'model_memory': model_memory,
-                    'model_performance': model_performance['val_acc']
-                }
-
-            df_temp = pd.DataFrame(models_info).T
-            top_models = df_temp.sort_values('model_performance', ascending=False)
-            top_models = top_models.reset_index()['index'].values.tolist()[:3]
-
-            mod_top1, arch_top1 = models_info[ top_models[0] ]['model_memory'] , top_models[0]
-            mod_top2, arch_top2 = models_info[ top_models[1] ]['model_memory'] , top_models[1]
-            mod_top3, arch_top3 = models_info[ top_models[2] ]['model_memory'] , top_models[2]
+        for model in model_zoo:
             
-            # Medir tiempo de ejecucion
-            import time
-            start = time.time()
+            print("AUG_FACTOR: ", pipeline["aug_factor"])
+            
+            model_memory , model_performance = training(kfold,etapa,datos,model,iteracion,models_info,classification_metrics,pipeline)
 
-            print("EVALUATING CO-TRAINING ...")
-            print("\n")
-
-            cotrain_acc1, cotrain_infer_dfs1 = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
-                                                    arch_top2,arch_top3,datos,etapa,kfold,
-                                                    iteracion,pipeline,models_info,'patologo1',logs)
-
-            print("Co-train - Patologo 1: ", cotrain_acc1)
-
-            cotrain_acc2, cotrain_infer_dfs2 = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
-                                                    arch_top2,arch_top3,datos,etapa,kfold,
-                                                    iteracion,pipeline,models_info,'patologo2',logs)
-
-            print("Co-train - Patologo 2: ", cotrain_acc2)
-
-            df_cotrain_info = {
-                    "kfold": kfold,
-                    "iteracion" : iteracion,
-                    "patologo1": {
-                        "df_arch1" : cotrain_infer_dfs1[0],
-                        "df_arch2" : cotrain_infer_dfs1[1],
-                        "df_arch3" : cotrain_infer_dfs1[2]
-                    },
-                    "patologo2": {
-                        "df_arch1" : cotrain_infer_dfs2[0],
-                        "df_arch2" : cotrain_infer_dfs2[1],
-                        "df_arch3" : cotrain_infer_dfs2[2]
-                    },
+            models_info[model] = {
+                'model_memory': model_memory,
+                'model_performance': model_performance['val_acc']
             }
 
-            cotrain_list.append(df_cotrain_info)
-            df_cotrain_list = pd.DataFrame(cotrain_list)
+        df_temp = pd.DataFrame(models_info).T
+        top_models = df_temp.sort_values('model_performance', ascending=False)
+        top_models = top_models.reset_index()['index'].values.tolist()[:3]
 
-            infer_pkl = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_cotrain_eval.pkl'
-            
-            print("SAVING COTRAIN EVAL PICKLE")
-            df_cotrain_list.to_pickle(infer_pkl)
-            print("OK - SAVING COTRAIN EVAL PICKLE")
+        mod_top1, arch_top1 = models_info[ top_models[0] ]['model_memory'] , top_models[0]
+        mod_top2, arch_top2 = models_info[ top_models[1] ]['model_memory'] , top_models[1]
+        mod_top3, arch_top3 = models_info[ top_models[2] ]['model_memory'] , top_models[2]
+        
+        # Medir tiempo de ejecucion
+        import time
+        start = time.time()
 
-            print("\n")
-            print("OK - EVALUATING CO-TRAINING")
+        print("EVALUATING CO-TRAINING ...")
+        print("\n")
 
-            end = time.time()
-            infer_time = end - start
+        cotrain_acc1, cotrain_infer_dfs1 = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
+                                                arch_top2,arch_top3,datos,etapa,kfold,
+                                                iteracion,pipeline,models_info,'patologo1',logs)
 
-            # SAVE INFER_TIME BY DF_TEST BY ITERATION AND ARCH
-            print(infer_time, len(datos["df_test1"]))
+        print("Co-train - Patologo 1: ", cotrain_acc1)
 
-            logs_infer_time = []
-            logs_infer_time.append([kfold, iteracion, 'co-train1', infer_time, len(datos["df_test1"])])
-            save_logs(logs_infer_time, 'infer_time', pipeline)
+        cotrain_acc2, cotrain_infer_dfs2 = evaluate_cotrain(mod_top1,mod_top2,mod_top3,arch_top1,
+                                                arch_top2,arch_top3,datos,etapa,kfold,
+                                                iteracion,pipeline,models_info,'patologo2',logs)
 
-            print(f"GETTING BATCH_SET OF ITERATION {iteracion}...")
+        print("Co-train - Patologo 2: ", cotrain_acc2)
 
-            #df_batchset = datos["batch_set"][iteracion]
-            #df_batchset.columns = [pipeline["x_col_name"],pipeline["y_col_name"]]
-            #df_batchset[pipeline["y_col_name"]] = '0'
+        df_cotrain_info = {
+                "kfold": kfold,
+                "iteracion" : iteracion,
+                "patologo1": {
+                    "df_arch1" : cotrain_infer_dfs1[0],
+                    "df_arch2" : cotrain_infer_dfs1[1],
+                    "df_arch3" : cotrain_infer_dfs1[2]
+                },
+                "patologo2": {
+                    "df_arch1" : cotrain_infer_dfs2[0],
+                    "df_arch2" : cotrain_infer_dfs2[1],
+                    "df_arch3" : cotrain_infer_dfs2[2]
+                },
+        }
 
-            #datos['df_batchset'] = df_batchset
-            
-            print("LABELING ...")
+        cotrain_list.append(df_cotrain_info)
+        df_cotrain_list = pd.DataFrame(cotrain_list)
 
-            if pipeline["labeling_method"] == "decision":
-                datos, EL_iter, LC_iter, EL_accu, LC_accu, label_infer_df = labeling(etapa, mod_top1, mod_top2, mod_top3, 
-                                                    arch_top1, arch_top2, arch_top3, 
-                                                    datos, pipeline, iteracion, models_info)
-            elif pipeline["labeling_method"] == "democratic": 
-                datos, EL_iter, LC_iter, EL_accu, LC_accu, label_infer_df = labeling_v2(etapa, mod_top1, mod_top2, mod_top3, 
-                                                    arch_top1, arch_top2, arch_top3, 
-                                                    datos, pipeline, iteracion, models_info)
+        infer_pkl = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_cotrain_eval.pkl'
+        
+        print("SAVING COTRAIN EVAL PICKLE")
+        df_cotrain_list.to_pickle(infer_pkl)
+        print("OK - SAVING COTRAIN EVAL PICKLE")
 
-            df_label_info = {
-                    "kfold": kfold,
-                    "iteracion" : iteracion,
-                    "df_arch1" : label_infer_df[0],
-                    "df_arch2" : label_infer_df[1],
-                    "df_arch3" : label_infer_df[2]
-            }
+        print("\n")
+        print("OK - EVALUATING CO-TRAINING")
 
-            label_list.append(df_label_info)
-            df_label_list = pd.DataFrame(label_list)
+        end = time.time()
+        infer_time = end - start
 
-            label_pkl = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_labeling.pkl'
-            
-            print("SAVING LABEL PICKLE")
-            df_label_list.to_pickle(label_pkl)
-            print("OK - SAVING LABEL PICKLE")
+        # SAVE INFER_TIME BY DF_TEST BY ITERATION AND ARCH
+        print(infer_time, len(datos["df_test1"]))
 
-            print("OK - LABELING")
-            print("EL_iter", len(EL_iter))
-            print("LC_iter", len(LC_iter))
+        logs_infer_time = []
+        logs_infer_time.append([kfold, iteracion, 'co-train1', infer_time, len(datos["df_test1"])])
+        save_logs(logs_infer_time, 'infer_time', pipeline)
 
-            df_EL = pd.DataFrame(datos["EL"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
-            df_LC = pd.DataFrame(datos["LC"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
-            
-            df_EL.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_EL.pickle')
-            df_LC.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_LC.pickle')
+        if method == "supervised":
+            print(f"SUPERVISED METHOD COMPLETED FOR ITERATION: {iteracion}")
+            #reset_keras(pipeline)
+            continue
 
-            df_label_stats = label_stats(df_EL, df_LC, pipeline)
-            df_label_stats.to_pickle( pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_stats.pickle' )
-            
+        print(f"GETTING BATCH_SET OF ITERATION {iteracion}...")
+        print("LABELING ...")
 
-            df_train_EL = pd.concat([datos["df_train"],df_EL.iloc[:,:2]])
-            datos['df_train_EL'] = df_train_EL
+        if pipeline["labeling_method"] == "decision":
+            datos, EL_iter, LC_iter, EL_accu, LC_accu, label_infer_df = labeling(etapa, mod_top1, mod_top2, mod_top3, 
+                                                arch_top1, arch_top2, arch_top3, 
+                                                datos, pipeline, iteracion, models_info)
+        elif pipeline["labeling_method"] == "democratic": 
+            datos, EL_iter, LC_iter, EL_accu, LC_accu, label_infer_df = labeling_v2(etapa, mod_top1, mod_top2, mod_top3, 
+                                                arch_top1, arch_top2, arch_top3, 
+                                                datos, pipeline, iteracion, models_info)
 
-            ssl_th = pipeline["ssl_threshold"]
-            
-            logs_label.append([kfold, iteracion, arch_top1, arch_top2, arch_top3,
-                                len(EL_iter), len(LC_iter), EL_accu, LC_accu, ssl_th])
-            save_logs(logs_label,'label',pipeline)
+        df_label_info = {
+                "kfold": kfold,
+                "iteracion" : iteracion,
+                "df_arch1" : label_infer_df[0],
+                "df_arch2" : label_infer_df[1],
+                "df_arch3" : label_infer_df[2]
+        }
 
-            reset_keras(pipeline)
+        label_list.append(df_label_info)
+        df_label_list = pd.DataFrame(label_list)
+
+        label_pkl = pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_labeling.pkl'
+        
+        print("SAVING LABEL PICKLE")
+        df_label_list.to_pickle(label_pkl)
+        print("OK - SAVING LABEL PICKLE")
+
+        print("OK - LABELING")
+        print("EL_iter", len(EL_iter))
+        print("LC_iter", len(LC_iter))
+
+        df_EL = pd.DataFrame(datos["EL"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
+        df_LC = pd.DataFrame(datos["LC"], columns=[ pipeline["x_col_name"], pipeline["y_col_name"], 'arch_scores' ])
+        
+        df_EL.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_EL.pickle')
+        df_LC.to_pickle(pipeline["save_path_stats"]+'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_LC.pickle')
+
+        df_label_stats = label_stats(df_EL, df_LC, pipeline)
+        df_label_stats.to_pickle( pipeline["save_path_stats"] + 'exp_'+str(pipeline["id"])+'_'+str(iteracion)+'_stats.pickle' )
+        
+
+        df_train_EL = pd.concat([datos["df_train"],df_EL.iloc[:,:2]])
+        datos['df_train_EL'] = df_train_EL
+
+        ssl_th = pipeline["ssl_threshold"]
+        
+        logs_label.append([kfold, iteracion, arch_top1, arch_top2, arch_top3,
+                            len(EL_iter), len(LC_iter), EL_accu, LC_accu, ssl_th])
+        save_logs(logs_label,'label',pipeline)
+
+        reset_keras(pipeline)
 
     end = time.time()
     print(end - start)
